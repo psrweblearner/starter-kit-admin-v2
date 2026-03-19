@@ -1,0 +1,253 @@
+<div class="psr-card">
+    <div class="psr-card-header">
+        <h3 class="psr-card-title">Edit Blog</h3>
+    </div>
+    <div class="psr-card-body">
+        <div class="psr-tabs" data-psr-tabs>
+            <div class="psr-tablist" role="tablist" aria-label="Blog Edit Tabs">
+                <button role="tab" class="psr-tab active" aria-selected="true" aria-controls="tab-panel-1"
+                    id="tab-1">General</button>
+                <button role="tab" class="psr-tab" aria-selected="false" aria-controls="tab-panel-2"
+                    id="tab-2">Description</button>
+                <button role="tab" class="psr-tab" aria-selected="false" aria-controls="tab-panel-3"
+                    id="tab-3">Gallery</button>
+                <button role="tab" class="psr-tab" aria-selected="false" aria-controls="tab-panel-4"
+                    id="tab-4">FAQs</button>
+            </div>
+
+            <!-- General Tab -->
+            <div tabindex="0" role="tabpanel" class="psr-tab-panel active" id="tab-panel-1" aria-labelledby="tab-1">
+                {{> blog/general data=data}}
+            </div>
+            <div tabindex="0" role="tabpanel" class="psr-tab-panel" id="tab-panel-2" aria-labelledby="tab-2">
+                {{> blog/description data=data}}
+            </div>
+            <div tabindex="0" role="tabpanel" class="psr-tab-panel" id="tab-panel-3" aria-labelledby="tab-3">
+                {{> blog/gallery data=data}}
+            </div>
+            <div tabindex="0" role="tabpanel" class="psr-tab-panel" id="tab-panel-4" aria-labelledby="tab-4">
+                {{> blog/faq data=data}}
+            </div>
+        </div>
+    </div>
+</div>
+{{#section 'script'}}
+<script src="/admin/js/basic-data-table.js"></script>
+<script>
+    $('#author,#tags,#categories').PSRMultiselect();
+    $('#gallery').PSRMultiselect({
+        onChange: function (values, objects) {
+            const dt = PSRDataTable.getInstance('blog-gallery-table');
+            if (dt) dt.updateData(objects);
+        }
+    });
+    $('#faq').PSRMultiselect({
+        onChange: function (values, objects) {
+            const dt = PSRDataTable.getInstance('blog-faq-table');
+            if (dt) dt.updateData(objects);
+        }
+    });
+    $('#blogEditForm').psrValidate({
+        rules: {
+            title: { required: true, minLength: 2 },
+            slug: { required: true, minLength: 2 },
+            author: { required: true },
+            categories: { required: true },
+            tags: { required: true },
+            tagline: { required: true, minLength: 10 },
+            file_id: { required: true }
+        },
+        messages: {
+            title: { required: 'Please enter title', minLength: 'Title should be more then 2 characters' },
+            slug: { required: 'Please enter slug', minLength: 'Slug should be more then 2 characters' },
+            author: { required: 'Please select author' },
+            categories: { required: 'Please select categories' },
+            tags: { required: 'Please select tags' },
+            tagline: { required: 'Please enter tagline', minLength: 'Tagline must be at least 10 characters long' },
+            file_id: { required: 'Please select feature image' }
+        },
+        beforeSubmit: function () {
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            $btn.prop('disabled', true);
+            if (!$btn.find('.psr-spinner').length) {
+                $btn.prepend('<span class="psr-spinner"></span> ');
+            }
+        },
+        onValid: function () {
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            $.ajax({
+                url: api(`blogs/{{data.id}}`),   // change this
+                method: 'PUT',
+                data: $form.serialize(),
+                success: function (res) {
+                    toastr.success('Form submitted successfully!');
+                    $form.find('.success, .error').removeClass('success error');
+                    $form.find('.psr-field-error').remove();
+                },
+                error: function (err) {
+                    toastr.error('An error occurred while submiting.' + err.message);
+                },
+                complete: function () {
+                    // 🔹 always reset button
+                    $btn.prop('disabled', false);
+                    $btn.find('.psr-spinner').remove();
+                }
+            });
+
+            return false;
+        },
+        onInvalid: function () {
+            toastr.error('Please correct the errors in the form.');
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            $btn.prop('disabled', false);
+            $btn.find('.psr-spinner').remove();
+        }
+    });
+
+    $('#blogDesc').psrValidate({
+        rules: {
+            description: { required: true, minLength: 2 },
+        },
+        messages: {
+            description: { required: 'Please enter description', minLength: 'Description should be more then 2 characters' },
+        },
+        beforeSubmit: function () {
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            $btn.prop('disabled', true);
+            if (!$btn.find('.psr-spinner').length) {
+                $btn.prepend('<span class="psr-spinner"></span> ');
+            }
+        },
+        onValid: function () {
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            $.ajax({
+                url: api(`blogs/{{data.id}}`),   // change this
+                method: 'PUT',
+                data: $form.serialize(),
+                success: function (res) {
+                    toastr.success('Form submitted successfully!');
+                    $form.find('.success, .error').removeClass('success error');
+                    $form.find('.psr-field-error').remove();
+                },
+                error: function (err) {
+                    toastr.error('An error occurred while submiting.' + err.message);
+                },
+                complete: function () {
+                    // 🔹 always reset button
+                    $btn.prop('disabled', false);
+                    $btn.find('.psr-spinner').remove();
+                }
+            });
+
+            return false;
+        },
+        onInvalid: function () {
+            toastr.error('Please correct the errors in the form.');
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            $btn.prop('disabled', false);
+            $btn.find('.psr-spinner').remove();
+        }
+    });
+    $('#blogGallery').psrValidate({
+        rules: {
+            gallery: { required: true },
+        },
+        messages: {
+            gallery: { required: 'Please select gallery images' },
+        },
+        beforeSubmit: function () {
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            $btn.prop('disabled', true);
+            if (!$btn.find('.psr-spinner').length) {
+                $btn.prepend('<span class="psr-spinner"></span> ');
+            }
+        },
+        onValid: function () {
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            $.ajax({
+                url: api(`blogs/{{data.id}}`),   // change this
+                method: 'PUT',
+                data: $form.serialize(),
+                success: function (res) {
+                    toastr.success('Form submitted successfully!');
+                    $form.find('.success, .error').removeClass('success error');
+                    $form.find('.psr-field-error').remove();
+                },
+                error: function (err) {
+                    toastr.error('An error occurred while submiting.' + err.message);
+                },
+                complete: function () {
+                    // 🔹 always reset button
+                    $btn.prop('disabled', false);
+                    $btn.find('.psr-spinner').remove();
+                }
+            });
+
+            return false;
+        },
+        onInvalid: function () {
+            toastr.error('Please correct the errors in the form.');
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            $btn.prop('disabled', false);
+            $btn.find('.psr-spinner').remove();
+        }
+    });
+    $('#blogFaq').psrValidate({
+        rules: {
+            faq: { required: true },
+        },
+        messages: {
+            faq: { required: 'Please select faqs' },
+        },
+        beforeSubmit: function () {
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            $btn.prop('disabled', true);
+            if (!$btn.find('.psr-spinner').length) {
+                $btn.prepend('<span class="psr-spinner"></span> ');
+            }
+        },
+        onValid: function () {
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            $.ajax({
+                url: api(`blogs/{{data.id}}`),   // change this
+                method: 'PUT',
+                data: $form.serialize(),
+                success: function (res) {
+                    toastr.success('Form submitted successfully!');
+                    $form.find('.success, .error').removeClass('success error');
+                    $form.find('.psr-field-error').remove();
+                },
+                error: function (err) {
+                    toastr.error('An error occurred while submiting.' + err.message);
+                },
+                complete: function () {
+                    // 🔹 always reset button
+                    $btn.prop('disabled', false);
+                    $btn.find('.psr-spinner').remove();
+                }
+            });
+
+            return false;
+        },
+        onInvalid: function () {
+            toastr.error('Please correct the errors in the form.');
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            $btn.prop('disabled', false);
+            $btn.find('.psr-spinner').remove();
+        }
+    });
+
+</script>
+{{/section}}

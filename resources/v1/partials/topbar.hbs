@@ -1,0 +1,49 @@
+<div class="psr-top-header">
+    <div class="psr-greeting">
+        <div class="psr-icons-box">
+            <div class="psr-icons"><i class="fa-solid fa-bars-staggered"></i></div>
+        </div>
+        <h4><span id="greeting"></span> {{user.firstName}} {{user.lastName}}</h4>
+    </div>
+    <div class="psr-search-bar"></div>
+    <ul class="psr-top-nav">
+        <li class="psr-time"><i class="fa-solid fa-clock"></i> <span id="time">11:16AM</span></li>
+        {{!-- Show switcher only if user has more than one role AND the current role is not Admin (ID 1) --}}
+        
+        {{#if (gt (length user.roles) 1)}}
+        <li class="psr-navbar-profile" onclick="toggleRoleDropdown(event)">
+            <p><i class="fa-solid fa-shuffle"></i>
+                {{#if user.role}}
+                {{user.role.title}}
+                {{else}}
+                Switch Role
+                {{/if}}</p>
+            <ul id="psrRoleDropdown" class="psr-dropdown hidden">
+                {{#each user.roles}}
+                {{#if (eq this.status 1)}}
+                <li>
+                    <a href="javascript:void(0);" class="{{#if (eq this.id ../user.role.id)}}role-active{{/if}}"
+                        onclick="switchRole('{{this.id}}', '{{../user.id}}')">
+                        {{this.title}}
+                    </a>
+                </li>
+                {{/if}}
+                {{/each}}
+            </ul>
+        </li>
+        {{/if}}
+
+
+        <li class="psr-navbar-profile" onclick="toggleProfileDropdown(event)">
+            <p><i class="fa-solid fa-user"></i> {{user.firstName}} {{user.lastName}}</p>
+            <ul id="psrProfileDropdown" class="psr-dropdown hidden">
+                <li class="psr-user-info">
+                    <div class="user-name">{{user.firstName}} {{user.lastName}}</div>
+                    <div class="user-role">{{user.role.title}}</div>
+                </li>
+                <li><a href="/profile"><i class="fa-solid fa-user-circle"></i> Profile</a></li>
+                <li><a href="/logout"><i class="fa-solid fa-power-off"></i> Logout</a></li>
+            </ul>
+        </li>
+    </ul>
+</div>

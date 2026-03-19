@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {{!-- Meta Section --}}
+  <title>Admin Dashboard</title>
+  {{!-- Style Section --}}
+  <link
+    href="https://fonts.googleapis.com/css2?family=Convergence&family=Poppins:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+  <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/admin/css/common.css">
+  <link rel="stylesheet" href="/admin/css/psr-theme.css">
+  {{{_sections.style}}}
+  <script type="text/javascript">
+    (function (c, l, a, r, i, t, y) {
+      c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments) };
+      t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
+      y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
+    })(window, document, "clarity", "script", "vwl75xbfbr");
+  </script>
+</head>
+
+<body onload="displayTime()">
+  <div class="psr-page-layout">
+    <div class="psr-page-container psr-sidebar-expanded">
+      <aside class="psr-side-bar">
+        <div class="psr-side-brand my-5"><a href="/admin/dashboard">Rawat <span> Duniya</span></a></div>
+        <div class="psr-side-navbar">
+          <ul>
+            {{!-- Loop through groups and find the one matching current URL --}}
+            <li class="psr-nav-item">
+              <a href="/admin/dashboard" class="psr-nav-link">
+                <i class="fa-solid fa-gauge"></i>
+                <div class="psr-nav-text">Dashboard</div>
+              </a>
+            </li>
+            <li class="psr-nav-item active">
+              <a href="javascript:void(0);" class="psr-nav-link">
+                <i class="fa fa-folder"></i>
+                <div class="psr-nav-text">File Manager</div>
+              </a>
+            </li>
+            {{#if (canAccess 'create')}}
+            <li class="psr-nav-item">
+              <a href="javascript:void(0);" class="psr-nav-link" onclick="fileManager.showCreateFolderDialog()">
+                <i class="fa fa-plus"></i>
+                <div class="psr-nav-text">New Folder</div>
+              </a>
+            </li>
+            <li class="psr-nav-item">
+              <a href="javascript:void(0);" class="psr-nav-link" onclick="openUploadModal()">
+                <i class="fa fa-upload"></i>
+                <div class="psr-nav-text">Upload Files</div>
+              </a>
+            </li>
+            {{/if}}
+            <li class="psr-nav-item">
+              <a href="javascript:void(0);" class="psr-nav-link" onclick="fileManager.goToRoot()">
+                <i class="fa fa-home"></i>
+                <div class="psr-nav-text">Root</div>
+              </a>
+            </li>
+            <li class="psr-nav-item">
+              <a href="javascript:void(0);" class="psr-nav-link" onclick="fileManager.goBack()">
+                <i class="fa fa-arrow-left"></i>
+                <div class="psr-nav-text">Back</div>
+              </a>
+            </li>
+            <li class="psr-nav-item">
+              <a href="javascript:void(0);" class="psr-nav-link" onclick="fileManager.refresh()">
+                <i class="fa fa-sync"></i>
+                <div class="psr-nav-text">Refresh</div>
+              </a>
+            </li>
+
+          </ul>
+        </div>
+      </aside>
+
+      <div class="psr-page-content">
+        {{>topbar}}
+        <div class="psr-main-body">{{{body}}}</div>
+      </div>
+    </div>
+  </div>
+
+  {{!-- Script Section --}}
+  <script>
+    // Expose only essential user data (hide sensitive roles, pages, groups arrays)
+    window.authUser = {
+      id: {{ user.id }},
+    firstName: "{{user.firstName}}",
+      lastName: "{{user.lastName}}",
+        email: "{{user.email}}",
+          role: {
+      id: "{{ user.role.id }}",
+        title: "{{user.role.title}}"
+    },
+    access: "{{user.access}}",
+      permissions: {{{json user.permissions }}}
+        };
+  </script>
+  <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="/helper.js"></script>
+  <script src="/admin/js/sidebar.js"></script>
+  <script src="/admin/js/psr-theme.js"></script>
+
+  {{{_sections.script}}}
+  <script>
+
+    function displayTime() {
+      var date = new Date();
+      var hours = date.getHours();
+      var minutes = date.getMinutes();
+      var seconds = date.getSeconds();
+      var ampm = hours >= 12 ? 'pm' : 'am';
+      hours = hours % 12;
+      hours = hours ? hours : 12; // the hour '0' should be '12'
+      minutes = minutes < 10 ? '0' + minutes : minutes;
+      seconds = seconds < 10 ? '0' + seconds : seconds;
+      var time = hours + ':' + minutes + ':' + seconds + ' ' + ampm;
+      document.getElementById('time').innerHTML = time;
+
+      var greeting;
+      if (hours >= 5 && hours < 12 && ampm === 'am') {
+        greeting = 'Good morning,';
+      }
+      else if (hours === 12 && ampm === 'pm') {
+        greeting = 'Good afternoon,';
+      }
+      else if (hours >= 1 && hours < 4 && ampm === 'pm') {
+        greeting = 'Good afternoon,';
+      }
+      else if (hours >= 4 && hours < 8 && ampm === 'pm') {
+        greeting = 'Good evening,';
+      } else {
+        greeting = 'Good night,';
+      }
+      document.getElementById('greeting').innerHTML = greeting;
+
+      setTimeout(displayTime, 1000);
+    }
+
+    function toggleRoleDropdown(event) {
+      event.stopPropagation(); // prevent closing immediately
+      const dropdown = document.getElementById('psrRoleDropdown');
+      dropdown.classList.toggle('hidden');
+    }
+
+    function toggleProfileDropdown(event) {
+      event.stopPropagation(); // prevent closing immediately
+      const dropdown = document.getElementById('psrProfileDropdown');
+      dropdown.classList.toggle('hidden');
+    }
+
+    // Optional: click outside to close
+    document.addEventListener('click', function () {
+      const roleDropdown = document.getElementById('psrRoleDropdown');
+      const profileDropdown = document.getElementById('psrProfileDropdown');
+      if (roleDropdown && !roleDropdown.classList.contains('hidden')) {
+        roleDropdown.classList.add('hidden');
+      }
+      if (profileDropdown && !profileDropdown.classList.contains('hidden')) {
+        profileDropdown.classList.add('hidden');
+      }
+    });
+
+
+    function switchRole(roleId, userId) {
+      roleId = Number(roleId);
+      userId = Number(userId);
+
+      fetchData(api('admin-auth/switch-role'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: { roleId, userId }
+      }).then(response => {
+        if (response.success) {
+          location.reload();
+        } else {
+          toastr.error(response.message || 'Failed to switch role');
+        }
+      }).catch(err => {
+        console.error('Error switching role:', err);
+        toastr.error('An error occurred while switching role');
+      });
+    }
+  </script>
+    <!-- WhatsApp Floating Button -->
+    <style>
+        .wa-float-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            background-color: #22c55e;
+            color: white;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 9999;
+        }
+        .wa-float-btn:hover {
+            background-color: #16a34a;
+            transform: scale(1.1);
+        }
+        .wa-ping-animation {
+            position: absolute;
+            display: inline-flex;
+            width: 100%;
+            height: 100%;
+            border-radius: 9999px;
+            background-color: #4ade80;
+            opacity: 0.75;
+            animation: wa-ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        @keyframes wa-ping {
+            75%, 100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+        .wa-svg-icon {
+            width: 32px;
+            height: 32px;
+            position: relative;
+            z-index: 10;
+        }
+    </style>
+    <a href="https://wa.me/919266535507?text=Hi%2C%20I%20want%20more%20details%20about%20your%20platform" target="_blank" class="wa-float-btn">
+        <span class="wa-ping-animation"></span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="wa-svg-icon" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564c.173.087.289.129.332.202.043.073.043.423-.101.827z" />
+        </svg>
+    </a>
+</body>
+
+</html>

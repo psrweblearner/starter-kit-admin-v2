@@ -1,0 +1,993 @@
+<!-- Enhanced Menu Builder with Modern Design -->
+<div class="menu-builder-container">
+  <!-- Header Section -->
+  <div class="menu-builder-header">
+    <div class="header-content">
+      <div class="title-section">
+        <h2 class="main-title">
+          <i class="fa-solid fa-sitemap"></i>
+          Menu Builder
+        </h2>
+        <p class="subtitle">Drag and drop to assign submenus to menu categories</p>
+      </div>
+      <div class="action-buttons">
+        <button id="clear-filter" class="psr-btn psr-btn-outline psr-btn-sm">
+          <i class="fa-solid fa-filter-circle-xmark"></i>
+          Clear Filter
+        </button>
+        <button id="clear-assigned" class="psr-btn psr-btn-outline-danger psr-btn-sm">
+          <i class="fa-solid fa-trash-can"></i>
+          Remove All
+        </button>
+        <button id="reset-board" class="psr-btn psr-btn-outline-secondary psr-btn-sm">
+          <i class="fa-solid fa-rotate-left"></i>
+          Reset
+        </button>
+        {{#if (canAccess 'update')}}
+        <button id="save-assignments" class="psr-btn psr-btn-primary psr-btn-sm">
+          <i class="fa-solid fa-floppy-disk"></i>
+          Save Changes
+        </button>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="menu-builder-content">
+    <!-- Left Panel - Menu Categories -->
+    <div class="menu-panel">
+      <div class="panel-header">
+        <h3 class="panel-title">
+          <i class="fa-solid fa-list"></i>
+          Menu Categories
+        </h3>
+      </div>
+      <div class="panel-body">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="menu-search" placeholder="Search menu categories..." />
+        </div>
+        <div class="menu-list-container">
+          <ul class="menu-list" id="menu-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Panel - Drag & Drop Assignment -->
+    <div class="assignment-panel">
+      <div class="panel-header">
+        <!-- Single Line Layout -->
+        <div class="header-content">
+          <!-- Left: Title + Stats -->
+          <div class="header-left">
+            <h3 class="panel-title" id="assignment-title">
+              <i class="fa-solid fa-puzzle-piece"></i>
+              Select a Menu Category
+            </h3>
+            <div class="stats-pills">
+              <div class="stat-pill">
+                <span class="stat-label">Assigned</span>
+                <span class="stat-value" id="assigned-count">0</span>
+              </div>
+              <div class="stat-pill">
+                <span class="stat-label">Total</span>
+                <span class="stat-value" id="total-count">0</span>
+              </div>
+              <div class="stat-pill">
+                <span class="stat-label">Selected</span>
+                <span class="stat-value" id="selected-count">0</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Search + Filter + Actions -->
+          <div class="header-right">
+            <div class="search-box">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" id="submenu-search" placeholder="Search submenus..." />
+            </div>
+            <div class="filter-box">
+              <select id="status-filter">
+                <option value="">All Status</option>
+                <option value="1">Active</option>
+                <option value="0">Inactive</option>
+              </select>
+            </div>
+            <div class="actions-group">
+              <button id="assign-selected" class="psr-btn psr-btn-success psr-btn-sm">
+                <i class="fa-solid fa-plus"></i>
+                Add Selected
+              </button>
+              <button id="clear-selections" class="psr-btn psr-btn-outline-warning psr-btn-sm">
+                <i class="fa-solid fa-check-double"></i>
+                Clear Selections
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Drag & Drop Container -->
+      <div class="drag-drop-container">
+        <div id="kanban-container"></div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" id="empty-state" style="display: none;">
+        <div class="empty-icon">
+          <i class="fa-solid fa-inbox"></i>
+        </div>
+        <h4>No Menu Selected</h4>
+        <p>Please select a menu category from the left panel to start assigning submenus.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loading-overlay" style="display: none;">
+    {{!-- <div class="loading-spinner">
+      <i class="fa-solid fa-spinner fa-spin"></i>
+      <span>Loading...</span>
+    </div> --}}
+  </div>
+
+  <!-- Success/Error Notifications -->
+  <div class="notification-container" id="notification-container"></div>
+</div>
+{{#section 'script'}}
+<script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    // DRY Menu Builder with Advanced Drag & Drop
+    class MenuBuilder {
+      constructor() {
+        this.state = {
+          menus: [],
+          submenus: [],
+          selectedMenuId: null,
+          assignments: new Map(),
+          filteredMenus: [],
+          filteredSubmenus: [],
+          selectedSubmenus: new Set()
+        };
+        this.board = null;
+        this.init();
+      }
+
+      async init() {
+        this.setupElements();
+        this.setupEventListeners();
+        await this.loadData();
+        await this.waitForKanbanLibrary();
+        this.renderMenuList();
+        if (this.state.menus.length > 0) {
+          this.selectMenu(this.state.menus[0].id);
+        } else {
+          this.clearSections(); // Clear sections if no menus are available
+        }
+        // No need to call mountBoard() or updateStats() directly here, as selectMenu() will handle it
+      }
+
+      setupElements() {
+        this.elements = {
+          menuListEl: document.getElementById('menu-list'),
+          kanbanBoardEl: document.getElementById('kanban-container'), // Changed to kanbanBoardEl for clarity
+          assignmentTitle: document.getElementById('assignment-title'),
+          assignedCount: document.getElementById('assigned-count'),
+          totalCount: document.getElementById('total-count'),
+          selectedCount: document.getElementById('selected-count'),
+          emptyState: document.getElementById('empty-state'),
+          loadingOverlay: document.getElementById('loading-overlay'),
+          notificationContainer: document.getElementById('notification-container'),
+          menuSearch: document.getElementById('menu-search'),
+          submenuSearch: document.getElementById('submenu-search'),
+          statusFilter: document.getElementById('status-filter')
+        };
+      }
+
+      setupEventListeners() {
+        // Action buttons
+        document.getElementById('assign-selected')?.addEventListener('click', () => this.assignSelected());
+        document.getElementById('clear-selections')?.addEventListener('click', () => this.clearSelections());
+        document.getElementById('save-assignments')?.addEventListener('click', () => this.saveAssignments());
+        document.getElementById('clear-assigned')?.addEventListener('click', () => this.clearAssigned());
+        document.getElementById('reset-board')?.addEventListener('click', () => this.resetBoard());
+        document.getElementById('clear-filter')?.addEventListener('click', () => this.clearFilters());
+        document.getElementById('retry-load')?.addEventListener('click', () => this.retryDataLoad());
+
+        // Search and filters
+        this.elements.menuSearch?.addEventListener('input', (e) => this.filterMenus(e.target.value));
+        this.elements.submenuSearch?.addEventListener('input', (e) => this.filterSubmenus(e.target.value));
+        this.elements.statusFilter?.addEventListener('change', (e) => this.filterByStatus(e.target.value));
+      }
+
+      // DRY Data Loading - Single method for all data loading
+      async loadData() {
+        this.showLoading(true);
+
+        try {
+
+          // fetch in parallel but handle failures gracefully
+          const [menusRes, submenusRes, assignmentsRes] = await Promise.allSettled([
+            fetchData(api('menu'), { params: { limit: 'all' } }),
+            fetchData(api('sub-menu'), { params: { limit: 'all' } }),
+            fetchData(api('assign-menu-assignments'), { params: { limit: 'all' } })
+          ]);
+
+          // normalize results
+          this.state.menus = menusRes.status === "fulfilled" ? menusRes.value?.data || [] : [];
+          this.state.submenus = submenusRes.status === "fulfilled" ? submenusRes.value?.data || [] : [];
+          this.state.filteredMenus = [...this.state.menus];
+          this.state.filteredSubmenus = [...this.state.submenus];
+
+          // process assignments only if available
+          const assignments = assignmentsRes.status === "fulfilled" ? assignmentsRes.value?.data || [] : [];
+          this.processAssignments(assignments);
+
+
+          // Removed renderMenuList() and selectMenu() from here. Will be called in init().
+        } catch (err) {
+          console.error("❌ loadData failed:", err);
+          this.state.menus = [];
+          this.state.submenus = [];
+          this.state.filteredMenus = [];
+          this.state.filteredSubmenus = [];
+          this.state.assignments = new Map(); // Ensure assignments is a Map even on error
+        } finally {
+          this.showLoading(false);
+        }
+      }
+
+      // DRY Assignment Processing
+      processAssignments(assignmentsData) {
+        this.state.assignments.clear();
+
+        if (Array.isArray(assignmentsData)) {
+          assignmentsData.forEach(menu => {
+            if (menu.submenus && Array.isArray(menu.submenus)) {
+              if (!this.state.assignments.has(menu.id)) {
+                this.state.assignments.set(menu.id, new Set());
+              }
+              menu.submenus.forEach(submenu => {
+                // Ensure we're adding numeric IDs, not strings
+                const submenuId = parseInt(submenu.id, 10);
+                if (!isNaN(submenuId)) {
+                  this.state.assignments.get(menu.id).add(submenuId);
+                }
+              });
+            }
+          });
+        }
+
+      }
+
+      // DRY Menu Rendering
+      renderMenuList() {
+        if (!this.elements.menuListEl) {
+          console.error('Error: menuListEl not found!');
+          return;
+        }
+
+        this.elements.menuListEl.innerHTML = '';
+
+        this.state.filteredMenus.forEach(menu => {
+          // Ensure menu.id is a number for consistent comparison
+          const menuId = parseInt(menu.id, 10);
+          const assignmentCount = this.state.assignments.get(menuId)?.size || 0;
+
+          const li = document.createElement('li');
+          li.className = `menu-item`; // Remove inline active class, highlightSelectedMenu will handle it
+          li.dataset.menuId = menuId; // Add data-menu-id attribute
+          li.innerHTML = `
+          <div class="menu-item-content">
+            <div class="menu-icon">
+              <i class="${menu.icon || 'fa-solid fa-folder'}"></i>
+            </div>
+            <div class="menu-details">
+              <div class="menu-title">${menu.title}</div>
+              <div class="menu-meta">
+                <span class="menu-status ${menu.status ? 'active' : 'inactive'}">
+                  ${menu.status ? 'Active' : 'Inactive'}
+                </span>
+                <span class="assignment-count">
+                  ${assignmentCount} assigned
+                </span>
+              </div>
+            </div>
+          </div>
+        `;
+
+          li.addEventListener('click', () => this.selectMenu(menuId));
+          this.elements.menuListEl.appendChild(li);
+        });
+      }
+
+      selectMenu(menuId) {
+        if (this.state.selectedMenuId === menuId) return; // Menu is already selected
+
+        this.state.selectedMenuId = menuId;
+        this.highlightSelectedMenu();
+        this.updateBoard(); // Use updateBoard to re-render the Kanban board with new data
+        this.updateStats();
+      }
+
+      highlightSelectedMenu() {
+        const menuListEl = this.elements.menuListEl;
+        if (menuListEl) {
+          menuListEl.querySelectorAll('.menu-item').forEach(item => { // Changed to .menu-item
+            item.classList.remove('active');
+          });
+          const selectedMenuItem = menuListEl.querySelector(`[data-menu-id="${this.state.selectedMenuId}"]`);
+          if (selectedMenuItem) {
+            selectedMenuItem.classList.add('active');
+          }
+        }
+      }
+
+      clearSections() {
+        // Clear the Kanban board sections
+        if (this.board) {
+          this.board.destroy(); // Destroy the existing board instance if it exists
+          this.board = null;
+        }
+        this.elements.kanbanBoardEl.innerHTML = '';
+        this.elements.assignmentTitle.textContent = 'Select a Menu Category';
+        this.updateStats(); // Also update stats to reflect cleared state
+        this.toggleEmptyState(true); // Show empty state when sections are cleared
+      }
+
+      // DRY Board Management
+      mountBoard() {
+        if (!this.state.selectedMenuId) {
+          this.toggleEmptyState(true);
+          return;
+        }
+
+        try {
+          const BoardClass = window.AdvancedKanbanBoard || window.KanbanBoard;
+          if (!BoardClass) {
+            // Defer mount and retry shortly if library not yet ready
+            setTimeout(() => this.mountBoard(), 100);
+            return;
+          }
+
+          // Destroy existing board instance if it exists before creating a new one
+          if (this.board) {
+            this.board.destroy();
+          }
+
+          // Set global instance for onclick handlers
+          window.menuBuilderInstance = this;
+
+          this.board = new BoardClass(this.elements.kanbanBoardEl, this.buildSections(), {
+            mode: 'copy',
+            isSectionCopyOnly: s => !!s.library,
+            isSectionLibrary: s => !!s.library,
+            showRemove: s => s.id === 'assigned',
+            onRemove: (item) => this.removeAssignment(item),
+            onChange: (data) => this.handleBoardChange(data),
+            onDragStart: (item) => this.handleDragStart(item),
+            onDragEnd: (item) => this.handleDragEnd(item),
+            onDrop: (item, targetSection) => this.handleDrop(item, targetSection),
+            // Click selection handled via event delegation below
+          });
+
+          // Re-bind item click handlers and apply selection styling
+          this.bindItemClickSelection();
+          this.applySelectionStyles();
+
+          // Add flip buttons to column headers
+          this.addFlipButtons();
+          this.toggleEmptyState(false); // Hide empty state when board is mounted
+        } catch (error) {
+          console.error('Error mounting board:', error);
+          this.showNotification('Error initializing drag and drop board', 'error');
+        }
+      }
+
+      updateBoard() {
+        if (!this.board) {
+          // If board is not mounted, mount it first
+          this.mountBoard();
+          return;
+        }
+
+        // Save scroll position before updating
+        const availableColumn = this.elements.kanbanBoardEl.querySelector('.kanban-column.library');
+        const assignedColumn = this.elements.kanbanBoardEl.querySelector('.kanban-column:not(.library)');
+        const availableScrollTop = availableColumn ? availableColumn.scrollTop : 0;
+        const assignedScrollTop = assignedColumn ? assignedColumn.scrollTop : 0;
+
+        // Update board data
+        this.board.setData(this.buildSections());
+
+        // After re-render, re-apply selection and click handlers
+        this.bindItemClickSelection();
+        this.applySelectionStyles();
+
+        // Add flip buttons to column headers
+        this.addFlipButtons();
+
+        // Restore scroll positions after DOM update
+        setTimeout(() => {
+          const newAvailableColumn = this.elements.kanbanBoardEl.querySelector('.kanban-column.library');
+          const newAssignedColumn = this.elements.kanbanBoardEl.querySelector('.kanban-column:not(.library)');
+
+          if (newAvailableColumn) newAvailableColumn.scrollTop = availableScrollTop;
+          if (newAssignedColumn) newAssignedColumn.scrollTop = assignedScrollTop;
+        }, 0);
+        this.toggleEmptyState(false); // Hide empty state when board is updated
+      }
+
+      // Ensure the kanban library is available before mounting
+      async waitForKanbanLibrary(maxTries = 30, intervalMs = 100) {
+        let tries = 0;
+        while (!window.AdvancedKanbanBoard && !window.KanbanBoard && tries < maxTries) {
+          await new Promise(r => setTimeout(r, intervalMs));
+          tries++;
+        }
+        if (!window.AdvancedKanbanBoard && !window.KanbanBoard) {
+          console.warn('Kanban library not found after wait. Check that public/admin/js/psr-theme.js is included.');
+        }
+      }
+
+      buildSections() {
+        const selectedMenu = this.state.menus.find(m => m.id === this.state.selectedMenuId);
+        if (!selectedMenu) {
+          console.error('No menu selected or menu not found for ID:', this.state.selectedMenuId);
+          // this.clearSections(); // Do not clear sections here, as this is for data generation
+          return []; // Return empty array if no menu is selected
+        }
+
+        this.elements.assignmentTitle.textContent = selectedMenu.title; // Update title in DOM
+
+        // Get submenus assigned to the selected menu
+        const assignedSubmenus = this.state.assignments.get(this.state.selectedMenuId) || new Set();
+
+        // Filter submenus for available and assigned
+        const availableSubmenus = this.getFilteredSubmenus().filter(sub => !assignedSubmenus.has(sub.id));
+        const assignedItems = this.getFilteredSubmenus().filter(sub => assignedSubmenus.has(sub.id));
+        return [
+          {
+            id: 'available',
+            title: 'Available Submenus',
+            items: availableSubmenus.map(sub => ({
+              id: sub.id,
+              title: sub.title,
+              icon: sub.icon,
+              status: sub.status,
+              selected: this.state.selectedSubmenus.has(sub.id),
+              selectable: true
+            })),
+            library: true // Mark as library column for the Kanban board
+          },
+          {
+            id: 'assigned',
+            title: 'Assigned Submenus',
+            items: assignedItems.map(sub => ({
+              id: sub.id,
+              title: sub.title,
+              icon: sub.icon,
+              status: sub.status
+            }))
+          }
+        ];
+      }
+
+      filterMenus(searchTerm) {
+        this.state.filteredMenus = this.state.menus.filter(menu =>
+          menu.title.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        this.renderMenuList();
+      }
+
+      filterSubmenus(searchTerm) {
+        this.state.filteredSubmenus = this.state.submenus.filter(submenu =>
+          submenu.title.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        this.updateBoard();
+      }
+
+      filterByStatus(status) {
+        this.state.filteredSubmenus = this.state.submenus.filter(submenu =>
+          status === '' || submenu.status.toString() === status
+        );
+        this.updateBoard();
+      }
+
+      getFilteredSubmenus() {
+        return this.state.filteredSubmenus;
+      }
+
+      // DRY Assignment Management
+      assignSelected() {
+        const menuId = this.state.selectedMenuId;
+        if (!menuId) {
+          this.showNotification('Please select a menu category first', 'warning');
+          return;
+        }
+
+        if (this.state.selectedSubmenus.size === 0) {
+          this.showNotification('Please select at least one submenu to assign', 'warning');
+          return;
+        }
+
+        // Save scroll positions before making changes
+        const availableColumn = this.elements.kanbanBoardEl.querySelector('.kanban-column.library'); // Changed from container to kanbanBoardEl
+        const assignedColumn = this.elements.kanbanBoardEl.querySelector('.kanban-column:not(.library)'); // Changed from container to kanbanBoardEl
+        const availableScrollTop = availableColumn ? availableColumn.scrollTop : 0;
+        const assignedScrollTop = assignedColumn ? assignedColumn.scrollTop : 0;
+
+        const selectedCount = this.state.selectedSubmenus.size;
+
+        // Assign only selected submenus
+        if (!this.state.assignments.has(menuId)) {
+          this.state.assignments.set(menuId, new Set());
+        }
+
+        this.state.selectedSubmenus.forEach(subId => {
+          this.state.assignments.get(menuId).add(subId);
+        });
+
+        // Clear selections after assignment
+        this.state.selectedSubmenus.clear();
+
+        // We need to rebuild the board for this operation as items move between columns
+        this.updateBoard();
+        this.updateStats();
+
+        // Restore scroll positions after DOM update
+        setTimeout(() => {
+          const newAvailableColumn = this.elements.kanbanBoardEl.querySelector('.kanban-column.library'); // Changed from container to kanbanBoardEl
+          const newAssignedColumn = this.elements.kanbanBoardEl.querySelector('.kanban-column:not(.library)'); // Changed from container to kanbanBoardEl
+
+          if (newAvailableColumn) newAvailableColumn.scrollTop = availableScrollTop;
+          if (newAssignedColumn) newAssignedColumn.scrollTop = assignedScrollTop;
+        }, 0);
+
+        this.showNotification(`Assigned ${selectedCount} selected submenus`, 'success');
+        // this.updateAssignmentsOnBackend(); // Removed backend update, only save button should trigger
+      }
+
+      assignAll() {
+        const menuId = this.state.selectedMenuId;
+        if (!menuId) {
+          this.showNotification('Please select a menu category first', 'warning');
+          return;
+        }
+
+        // Save scroll positions before making changes
+        const availableColumn = this.elements.kanbanBoardEl.querySelector('.kanban-column.library'); // Changed from container to kanbanBoardEl
+        const assignedColumn = this.elements.kanbanBoardEl.querySelector('.kanban-column:not(.library)'); // Changed from container to kanbanBoardEl
+        const availableScrollTop = availableColumn ? availableColumn.scrollTop : 0;
+        const assignedScrollTop = assignedColumn ? assignedColumn.scrollTop : 0;
+
+        // Get all available submenus
+        const availableSubmenus = this.getFilteredSubmenus();
+        const assignedSubmenus = this.state.assignments.get(menuId) || new Set();
+        const unassignedSubmenus = availableSubmenus.filter(sub => !assignedSubmenus.has(sub.id));
+
+        if (unassignedSubmenus.length === 0) {
+          this.showNotification('No available submenus to assign', 'info');
+          return;
+        }
+
+        // Assign all available submenus
+        if (!this.state.assignments.has(menuId)) {
+          this.state.assignments.set(menuId, new Set());
+        }
+
+        unassignedSubmenus.forEach(sub => {
+          this.state.assignments.get(menuId).add(sub.id);
+        });
+
+        // We need to rebuild the board for this operation as items move between columns
+        this.updateBoard();
+        this.updateStats();
+
+        // Restore scroll positions after DOM update
+        setTimeout(() => {
+          const newAvailableColumn = this.elements.kanbanBoardEl.querySelector('.kanban-column.library'); // Changed from container to kanbanBoardEl
+          const newAssignedColumn = this.elements.kanbanBoardEl.querySelector('.kanban-column:not(.library)'); // Changed from container to kanbanBoardEl
+
+          if (newAvailableColumn) newAvailableColumn.scrollTop = availableScrollTop;
+          if (newAssignedColumn) newAssignedColumn.scrollTop = assignedScrollTop;
+        }, 0);
+
+        this.showNotification(`Assigned ${unassignedSubmenus.length} submenus`, 'success');
+        // this.updateAssignmentsOnBackend(); // Removed backend update, only save button should trigger
+      }
+
+      removeAssignment(item) {
+        const menuId = this.state.selectedMenuId;
+        if (this.state.assignments.has(menuId)) {
+          this.state.assignments.get(menuId).delete(item.id);
+          this.updateBoard();
+          this.updateStats();
+          this.showNotification('Assignment removed', 'success');
+        }
+      }
+
+
+      handleDragStart(item) {
+        document.body.classList.add('dragging');
+      }
+
+      handleDragEnd(item) {
+        document.body.classList.remove('dragging');
+      }
+
+      handleDrop(item, targetSection) {
+        const menuId = this.state.selectedMenuId;
+        if (targetSection.id === 'assigned') {
+          if (!this.state.assignments.has(menuId)) {
+            this.state.assignments.set(menuId, new Set());
+          }
+          this.state.assignments.get(menuId).add(item.id);
+          // Do not call updateBoard here, as the Kanban library handles the DOM manipulation on drop
+          this.updateBoard(); // Call updateBoard to re-render the Kanban board and update counts
+          this.updateStats();
+          this.showNotification('Submenu assigned', 'success');
+        } else if (targetSection.id === 'available') {
+          // Remove from assignments if dropped back to available
+          if (this.state.assignments.has(menuId)) {
+            this.state.assignments.get(menuId).delete(item.id);
+            // Do not call updateBoard here, as the Kanban library handles the DOM manipulation on drop
+            this.updateBoard(); // Call updateBoard to re-render the Kanban board and update counts
+            this.updateStats();
+            this.showNotification('Assignment removed', 'info');
+          }
+        }
+        // this.updateAssignmentsOnBackend(); // Removed backend update, only save button should trigger
+      }
+
+      // Add this new method
+      handleBoardChange(data) {
+        // This method is called by the Kanban board when its internal state changes.
+        // For now, we can leave it empty or add logging if needed for debugging.
+        // console.log('Kanban board changed:', data);
+      }
+
+      // Handle submenu item click for selection
+      handleSubmenuClick(item, section) {
+        // Deprecated in favor of DOM delegation
+        if (section?.id === 'available') {
+          this.toggleSubmenuSelection(item.id);
+        }
+      }
+
+      // Event delegation for selecting items by clicking anywhere on the item row
+      bindItemClickSelection() {
+        if (!this.elements?.kanbanBoardEl) return; // Changed from container to kanbanBoardEl
+        // Remove any existing handler to avoid duplicates
+        if (this._clickBound) {
+          this.elements.kanbanBoardEl.removeEventListener('click', this._clickBound); // Changed from container to kanbanBoardEl
+        }
+        this._clickBound = (e) => {
+          const itemEl = e.target.closest('.kanban-item');
+          if (!itemEl) return;
+          const columnEl = e.target.closest('.kanban-column');
+          if (!columnEl || !columnEl.classList.contains('library')) return; // only selectable in library
+
+          // Prevent default behavior and stop propagation to avoid scroll jumping
+          e.preventDefault();
+          e.stopPropagation();
+
+          const idStr = itemEl.dataset.itemId;
+          if (!idStr) return;
+          const id = parseInt(idStr, 10);
+
+          // Save scroll position before any DOM updates
+          const scrollTop = columnEl.scrollTop;
+
+          // Toggle selection state in the data model
+          this.toggleSubmenuSelection(id);
+
+          // Update single item's selected class and checkbox state directly
+          // without rebuilding the entire board
+          itemEl.classList.toggle('selected', this.state.selectedSubmenus.has(id));
+          const checkbox = itemEl.querySelector('input.kanban-checkbox');
+          if (checkbox) checkbox.checked = this.state.selectedSubmenus.has(id);
+
+          // Update stats without rebuilding the board
+          this.updateStats();
+
+          // Restore scroll position
+          columnEl.scrollTop = scrollTop;
+        };
+        this.elements.kanbanBoardEl.addEventListener('click', this._clickBound); // Changed from container to kanbanBoardEl
+      }
+
+      // Apply selected visuals for all items after render/update
+      applySelectionStyles() {
+        if (!this.elements?.kanbanBoardEl) return; // Changed from container to kanbanBoardEl
+        const libraryCol = this.elements.kanbanBoardEl.querySelector('.kanban-column.library'); // Changed from container to kanbanBoardEl
+        if (!libraryCol) return;
+        libraryCol.querySelectorAll('.kanban-item').forEach(el => {
+          const id = parseInt(el.dataset.itemId || '0', 10);
+          const isSel = this.state.selectedSubmenus.has(id);
+          el.classList.toggle('selected', isSel);
+          const checkbox = el.querySelector('input.kanban-checkbox');
+          if (checkbox) checkbox.checked = isSel;
+        });
+      }
+
+      // Add flip buttons to kanban column headers
+      addFlipButtons() {
+        if (!this.elements?.kanbanBoardEl) return; // Changed from container to kanbanBoardEl
+
+        // Remove existing flip buttons first
+        this.elements.kanbanBoardEl.querySelectorAll('.kanban-flip-btn').forEach(btn => btn.remove()); // Changed from container to kanbanBoardEl
+
+        // Add flip button to available column (assign all)
+        const availableColumn = this.elements.kanbanBoardEl.querySelector('.kanban-column.library'); // Changed from container to kanbanBoardEl
+        if (availableColumn) {
+          const header = availableColumn.querySelector('.kanban-column-header');
+          if (header && !header.querySelector('.kanban-flip-btn')) {
+            const flipBtn = document.createElement('button');
+            flipBtn.className = 'kanban-flip-btn';
+            flipBtn.title = 'Assign All';
+            flipBtn.innerHTML = '<i class="fa-solid fa-arrow-right"></i>';
+            flipBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              this.assignAll();
+            });
+            header.appendChild(flipBtn);
+          }
+        }
+
+        // Add flip button to assigned column (remove all)
+        const assignedColumn = this.elements.kanbanBoardEl.querySelector('.kanban-column:not(.library)'); // Changed from container to kanbanBoardEl
+        if (assignedColumn) {
+          const header = assignedColumn.querySelector('.kanban-column-header');
+          if (header && !header.querySelector('.kanban-flip-btn')) {
+            const flipBtn = document.createElement('button');
+            flipBtn.className = 'kanban-flip-btn';
+            flipBtn.title = 'Remove All';
+            flipBtn.innerHTML = '<i class="fa-solid fa-arrow-left"></i>';
+            flipBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              this.clearAssigned();
+            });
+            header.appendChild(flipBtn);
+          }
+        }
+      }
+
+      // DRY Stats and UI Updates
+      updateStats() {
+        const assignedCount = this.state.assignments.get(this.state.selectedMenuId)?.size || 0;
+        const totalCount = this.getFilteredSubmenus().length;
+        const selectedCount = this.state.selectedSubmenus.size;
+
+        this.elements.assignedCount.textContent = assignedCount;
+        this.elements.totalCount.textContent = totalCount;
+        this.elements.selectedCount.textContent = selectedCount;
+
+        const selectedMenu = this.state.menus.find(m => m.id === this.state.selectedMenuId);
+        this.elements.assignmentTitle.textContent = selectedMenu ? selectedMenu.title : 'Select a Menu Category';
+      }
+
+      toggleEmptyState(show = false) {
+        if (this.elements.emptyState) {
+          this.elements.emptyState.style.display = show ? 'block' : 'none';
+        }
+      }
+
+      // DRY Action Methods
+      async saveAssignments() {
+        const menuId = this.state.selectedMenuId;
+        if (!menuId) {
+          this.showNotification('Please select a menu category first', 'warning');
+          return;
+        }
+
+        const assignedSubmenus = this.state.assignments.get(menuId) || new Set();
+        if (assignedSubmenus.size === 0) {
+          this.showNotification('At least one submenu is required for menu assignment. Please assign at least one submenu.', 'info');
+          return;
+        }
+
+        this.showLoading(true);
+        try {
+          // Use the new centralized update method
+          const success = await this.updateAssignmentsOnBackend();
+          if (success) {
+            // Clear cache and reload data to ensure UI reflects backend state
+            this.state.assignments.clear();
+            await this.loadData();
+            this.renderMenuList();
+            if (this.state.menus.length > 0) {
+              this.selectMenu(menuId); // Re-select the current menu to refresh its state
+            }
+          }
+        } catch (error) {
+          // Errors are already handled by updateAssignmentsOnBackend, but catch here for any unexpected issues
+          console.error('Error in saveAssignments:', error);
+          this.showNotification('Failed to save assignments', 'error');
+        } finally {
+          this.showLoading(false);
+        }
+      }
+
+      async updateAssignmentsOnBackend() {
+        const menuId = this.state.selectedMenuId;
+        if (!menuId) {
+          console.warn('No menu selected, skipping backend assignment update.');
+          return false;
+        }
+
+        const assignedSubmenus = this.state.assignments.get(menuId) || new Set();
+
+        this.showLoading(true);
+        try {
+          const result = await fetchData(api('save-menu-submenu'), {
+            method: 'POST',
+            body: {
+              menuId,
+              submenuIds: Array.from(assignedSubmenus)
+            }
+          });
+
+          if (!result.status) {
+            console.error('Failed to update assignments on backend:', result.message || 'Unknown error');
+            this.showNotification(result.message || 'Failed to sync assignments with backend', 'error');
+            return false;
+          }
+
+          // Success - show success message and return true
+          this.showNotification(result.message || 'Menu assignments saved successfully', 'success');
+          return true;
+
+        } catch (error) {
+          console.error('Error updating assignments on backend:', error);
+          this.showNotification('Error syncing assignments with backend', 'error');
+          return false;
+        } finally {
+          this.showLoading(false);
+        }
+      }
+
+      clearAssigned() {
+        const menuId = this.state.selectedMenuId;
+        if (!menuId) {
+          this.showNotification('Please select a menu category first to clear assignments', 'warning');
+          return;
+        }
+        this.state.assignments.set(menuId, new Set());
+        this.updateBoard();
+        this.updateStats();
+        this.showNotification('All assignments cleared for selected menu', 'info');
+        // this.updateAssignmentsOnBackend(); // Removed backend update, only save button should trigger
+      }
+
+      resetBoard() {
+        this.state.assignments.clear(); // Clear all assignments across all menus
+        this.state.selectedSubmenus.clear();
+        this.updateBoard(); // Update the board to reflect the cleared assignments for the selected menu
+        this.updateStats();
+        this.showNotification('Board reset to initial state', 'info');
+      }
+
+      clearFilters() {
+        this.elements.menuSearch.value = '';
+        this.elements.submenuSearch.value = '';
+        this.elements.statusFilter.value = '';
+        this.state.filteredMenus = [...this.state.menus];
+        this.state.filteredSubmenus = [...this.state.submenus];
+        this.state.selectedSubmenus.clear();
+        this.renderMenuList();
+        this.updateBoard();
+        this.highlightSelectedMenu(); // Re-apply active class after filtering and re-rendering
+        this.showNotification('Filters and selections cleared', 'info');
+      }
+
+      // Toggle submenu selection
+      toggleSubmenuSelection(submenuId) {
+        if (this.state.selectedSubmenus.has(submenuId)) {
+          this.state.selectedSubmenus.delete(submenuId);
+        } else {
+          this.state.selectedSubmenus.add(submenuId);
+        }
+        // Don't call updateBoard() which rebuilds the entire board and resets scroll position
+        // Instead, the calling method should update the specific item's UI directly
+      }
+
+      // Clear all selections
+      clearSelections() {
+        // Save scroll positions before clearing selections
+        const availableColumn = this.elements.kanbanBoardEl.querySelector('.kanban-column.library'); // Changed from container to kanbanBoardEl
+        const scrollTop = availableColumn ? availableColumn.scrollTop : 0;
+
+        this.state.selectedSubmenus.clear();
+
+        // Update UI without full board rebuild
+        if (availableColumn) {
+          availableColumn.querySelectorAll('.kanban-item').forEach(el => {
+            el.classList.remove('selected');
+            const checkbox = el.querySelector('input.kanban-checkbox');
+            if (checkbox) checkbox.checked = false;
+          });
+        }
+
+        this.updateStats();
+        this.showNotification('All selections cleared', 'info');
+
+        // Restore scroll position
+        if (availableColumn) {
+          availableColumn.scrollTop = scrollTop;
+        }
+      }
+
+      // DRY Utility Methods
+      showLoading(show) {
+        if (this.elements.loadingOverlay) {
+          this.elements.loadingOverlay.style.display = show ? 'flex' : 'none';
+        }
+      }
+
+      showNotification(message, type = 'info') {
+        // Use toastr if available, fallback to custom notification
+        if (typeof toastr !== 'undefined') {
+          switch (type) {
+            case 'success':
+              toastr.success(message);
+              break;
+            case 'error':
+              toastr.error(message);
+              break;
+            case 'warning':
+              toastr.warning(message);
+              break;
+            case 'info':
+            default:
+              toastr.info(message);
+              break;
+          }
+        } else {
+          // Fallback to custom notification
+          const container = this.elements.notificationContainer;
+          if (!container) return;
+
+          const notification = document.createElement('div');
+          notification.className = `notification notification-${type}`;
+          notification.innerHTML = `
+            <div class="notification-content">
+              <i class="fa-solid fa-${this.getNotificationIcon(type)}"></i>
+              <span>${message}</span>
+            </div>
+            <button class="notification-close" onclick="this.parentElement.remove()">
+              <i class="fa-solid fa-times"></i>
+            </button>
+          `;
+
+          container.appendChild(notification);
+
+          setTimeout(() => {
+            if (notification.parentElement) {
+              notification.remove();
+            }
+          }, 5000);
+        }
+      }
+
+      getNotificationIcon(type) {
+        const icons = {
+          success: 'check-circle',
+          error: 'exclamation-circle',
+          warning: 'exclamation-triangle',
+          info: 'info-circle'
+        };
+        return icons[type] || 'info-circle';
+      }
+    }
+
+    // Initialize Menu Builder
+    new MenuBuilder();
+  });
+</script>
+
+
+{{/section}}

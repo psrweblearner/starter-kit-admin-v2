@@ -1,0 +1,38 @@
+<div class="psr-grid psr-grid-col-2 gap-2 mt-5">
+    <!-- Left Column: Pages -->
+    <div class="psr-card">
+        <div class="psr-card-header">
+            <h3 class="psr-card-title"><i class="fa-solid fa-list-check mr-1"></i> Available Pages</h3>
+        </div>
+        <div class="psr-card-body">
+            <div class="psr-menu-cards psr-menu-cards-3">
+                <div class="psr-menu-card psr-menu-card-primary" onclick="location.href='/admin/dashboard'">
+                    <div class="psr-menu-card-icon">
+                        <i class="fa-solid fa-gauge"></i>
+                    </div>
+                    <div class="psr-menu-card-content">Dashboard</div>
+                </div>
+
+                {{#each user.groups}}
+                {{#if (contains ../req.url this.slug)}}
+                {{#each this.pages}}
+                {{#unless (eq this.slug "file-picker")}}
+                <div class="psr-menu-card psr-menu-card-primary" onclick="location.href='/admin/{{../slug}}/{{this.slug}}'">
+                    <div class="psr-menu-card-icon">
+                        <i class="{{this.icon}}"></i>
+                    </div>
+                    <div class="psr-menu-card-content">{{this.title}}</div>
+                </div>
+                {{/unless}}
+                {{/each}}
+                {{/if}}
+                {{/each}}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Information -->
+    <div class="psr-widgets-column">
+        {{>common-widgets}}
+    </div>
+</div>

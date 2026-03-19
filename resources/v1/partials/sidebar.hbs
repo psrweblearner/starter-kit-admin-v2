@@ -1,0 +1,34 @@
+<aside class="psr-side-bar">
+    <div class="psr-side-brand my-5">
+        <a href="/admin/dashboard">Rawat<span>Duniya</span></a>
+    </div>
+
+    <div class="psr-side-navbar">
+        <ul>
+            <li class="psr-nav-item">
+                <a href="/admin/dashboard" class="psr-nav-link">
+                    <i class="fa-solid fa-gauge"></i>
+                    <div class="psr-nav-text">Dashboard</div>
+                </a>
+            </li>
+
+            {{#each user.groups}}
+            {{#if (contains ../req.url this.slug)}}
+            {{#each this.pages}}
+            {{#if (contains ../../req.url (concat "/" ../slug "/"))}}
+            {{!-- ✅ Skip file-picker --}}
+            {{#unless (eq this.slug "file-picker")}}
+            <li class="psr-nav-item {{#if (matchSlug ../../req.url this.slug)}}active{{/if}}">
+                <a href="/admin/{{../slug}}/{{this.slug}}" class="psr-nav-link">
+                    <i class="{{this.icon}}"></i>
+                    <div class="psr-nav-text">{{this.title}}</div>
+                </a>
+            </li>
+            {{/unless}}
+            {{/if}}
+            {{/each}}
+            {{/if}}
+            {{/each}}
+        </ul>
+    </div>
+</aside>

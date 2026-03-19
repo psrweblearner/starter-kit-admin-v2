@@ -1,0 +1,536 @@
+<style>
+    :root {
+        --primary: #6366f1;
+        --secondary: #a855f7;
+        --accent: #f472b6;
+        --bg-card: #ffffff;
+        --text-main: #1e293b;
+        --text-muted: #64748b;
+        --border-color: #e2e8f0;
+    }
+
+    .cache-setup-container {
+        padding: 24px;
+        font-family: 'Outfit', 'Inter', sans-serif;
+    }
+
+    .setup-header {
+        margin-bottom: 32px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        padding: 40px;
+        border-radius: 24px;
+        color: white;
+        box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.4);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .setup-header::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        pointer-events: none;
+    }
+
+    .setup-header h1 {
+        margin: 0;
+        font-size: 32px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+    }
+
+    .setup-header p {
+        margin: 8px 0 0 0;
+        opacity: 0.9;
+        font-size: 16px;
+    }
+
+    .setup-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+        gap: 32px;
+    }
+
+    .scope-card {
+        background: var(--bg-card);
+        border-radius: 24px;
+        padding: 32px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        border: 1px solid var(--border-color);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .scope-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-title-area {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .card-title-area h2 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-main);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .card-title-area h2 i {
+        color: var(--primary);
+    }
+
+    /* Switch Component */
+    .switch-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .switch-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+    }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #cbd5e1;
+        transition: .4s;
+        border-radius: 24px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked+.slider {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(20px);
+    }
+
+    .form-group {
+        margin-bottom: 24px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 16px;
+        background: #f8fafc;
+        border: 2px solid #f1f5f9;
+        border-radius: 12px;
+        font-size: 15px;
+        color: var(--text-main);
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+
+    .json-editor {
+        font-family: 'Fira Code', 'Courier New', monospace;
+        font-size: 13px;
+        min-height: 120px;
+        line-height: 1.5;
+        resize: vertical;
+    }
+
+    .row-flex {
+        display: flex;
+        gap: 16px;
+    }
+
+    .row-flex>* {
+        flex: 1;
+    }
+
+    .status-section {
+        background: #f8fafc;
+        padding: 20px;
+        border-radius: 16px;
+        margin-bottom: 24px;
+    }
+
+    .btn-save {
+        width: 100%;
+        padding: 16px;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        color: white;
+        border: none;
+        border-radius: 14px;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: auto;
+    }
+
+    .btn-save:hover {
+        transform: scale(1.02);
+        box-shadow: 0 8px 20px -5px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-save:active {
+        transform: scale(0.98);
+    }
+
+    .btn-save i {
+        font-size: 18px;
+    }
+
+    .badge-scope {
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        background: #e0e7ff;
+        color: #4338ca;
+    }
+</style>
+
+<div class="cache-setup-container">
+    <div class="setup-header">
+        <h1>Cache Base Setup</h1>
+        <p>Manage performance layers for Public and Admin APIs</p>
+    </div>
+
+    <div class="setup-grid">
+        <!-- PUBLIC API SCOPE -->
+        <div class="scope-card" id="card_public">
+            <form id="form_public">
+                <input type="hidden" name="scope" value="public">
+                <input type="hidden" name="id" id="id_public">
+
+                <div class="card-title-area">
+                    <h2><i class="fa fa-users"></i> Public API <span class="badge-scope">Frontend</span></h2>
+                    <div class="switch-wrapper">
+                        <span class="switch-label">Status</span>
+                        <label class="switch">
+                            <input type="checkbox" name="is_active" id="active_public">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="status-section">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Fallback Strategy</label>
+                        <div class="switch-wrapper">
+                            <label class="switch">
+                                <input type="checkbox" name="is_fallback_active" id="fallback_public">
+                                <span class="slider"></span>
+                            </label>
+                            <span style="font-size: 13px; color: var(--text-muted);">Enable auto-fallback if primary
+                                fails</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row-flex">
+                    <div class="form-group">
+                        <label>Primary Layer</label>
+                        <select class="form-control" name="primary_backend" id="primary_public">
+                            <option value="node-cache">Node Cache (Memory)</option>
+                            <option value="redis">Redis (Local)</option>
+                            <option value="upstash">Upstash (Cloud)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Secondary Layer</label>
+                        <select class="form-control" name="secondary_backend" id="secondary_public">
+                            <option value="none">None</option>
+                            <option value="node-cache">Node Cache (Memory)</option>
+                            <option value="redis">Redis (Local)</option>
+                            <option value="upstash">Upstash (Cloud)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Redis Configuration (Local)</label>
+                    <textarea class="form-control json-editor" name="redis_config" id="redis_json_public"
+                        placeholder='{"url": "redis://..."}'></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Upstash Configuration (Cloud)</label>
+                    <textarea class="form-control json-editor" name="upstash_config" id="upstash_json_public"
+                        placeholder='{"url": "rediss://..."}'></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Node-Cache Config</label>
+                    <textarea class="form-control json-editor" name="node_cache_config" id="node_json_public"
+                        placeholder='{"stdTTL": 600}'></textarea>
+                </div>
+
+                <button type="submit" class="btn-save">
+                    <i class="fa fa-save"></i> Save Public Setup
+                </button>
+            </form>
+        </div>
+
+        <!-- ADMIN API SCOPE -->
+        <div class="scope-card" id="card_admin">
+            <form id="form_admin">
+                <input type="hidden" name="scope" value="admin">
+                <input type="hidden" name="id" id="id_admin">
+
+                <div class="card-title-area">
+                    <h2><i class="fa fa-user-shield"></i> Admin API <span class="badge-scope">Backend</span></h2>
+                    <div class="switch-wrapper">
+                        <span class="switch-label">Status</span>
+                        <label class="switch">
+                            <input type="checkbox" name="is_active" id="active_admin">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="status-section">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Fallback Strategy</label>
+                        <div class="switch-wrapper">
+                            <label class="switch">
+                                <input type="checkbox" name="is_fallback_active" id="fallback_admin">
+                                <span class="slider"></span>
+                            </label>
+                            <span style="font-size: 13px; color: var(--text-muted);">Enable auto-fallback if primary
+                                fails</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row-flex">
+                    <div class="form-group">
+                        <label>Primary Layer</label>
+                        <select class="form-control" name="primary_backend" id="primary_admin">
+                            <option value="node-cache">Node Cache (Memory)</option>
+                            <option value="redis">Redis (Local)</option>
+                            <option value="upstash">Upstash (Cloud)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Secondary Layer</label>
+                        <select class="form-control" name="secondary_backend" id="secondary_admin">
+                            <option value="none">None</option>
+                            <option value="node-cache">Node Cache (Memory)</option>
+                            <option value="redis">Redis (Local)</option>
+                            <option value="upstash">Upstash (Cloud)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Redis Configuration (Local)</label>
+                    <textarea class="form-control json-editor" name="redis_config" id="redis_json_admin"
+                        placeholder='{"url": "redis://..."}'></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Upstash Configuration (Cloud)</label>
+                    <textarea class="form-control json-editor" name="upstash_config" id="upstash_json_admin"
+                        placeholder='{"url": "rediss://..."}'></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Node-Cache Config</label>
+                    <textarea class="form-control json-editor" name="node_cache_config" id="node_json_admin"
+                        placeholder='{"stdTTL": 300}'></textarea>
+                </div>
+
+                <button type="submit" class="btn-save">
+                    <i class="fa fa-save"></i> Save Admin Setup
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{#section 'script'}}
+<script>
+    (function () {
+        // Raw data from server
+        const configs = {{{ json data.scopeStatus }}} || [];
+
+    // Helper to format JSON safely
+    const fmtJson = (val) => {
+        if (!val) return '{}';
+        if (typeof val === 'string') {
+            try {
+                // It's already an escaped string from DB
+                const parsed = JSON.parse(val);
+                return JSON.stringify(parsed, null, 2);
+            } catch (e) {
+                return val;
+            }
+        }
+        return JSON.stringify(val, null, 2);
+    };
+
+    // Populate Forms
+    const initForm = (scope) => {
+        const config = configs.find(c => c.scope === scope) || {};
+
+        document.getElementById(`id_${scope}`).value = config.id || "";
+        document.getElementById(`active_${scope}`).checked = config.id ? !!config.is_active : true;
+        document.getElementById(`fallback_${scope}`).checked = !!config.is_fallback_active;
+
+        if (config.primary_backend) document.getElementById(`primary_${scope}`).value = config.primary_backend;
+        if (config.secondary_backend) document.getElementById(`secondary_${scope}`).value = config.secondary_backend;
+
+        document.getElementById(`redis_json_${scope}`).value = fmtJson(config.redis_config);
+        document.getElementById(`upstash_json_${scope}`).value = fmtJson(config.upstash_config);
+        document.getElementById(`node_json_${scope}`).value = fmtJson(config.node_cache_config || { stdTTL: scope === 'admin' ? 300 : 600, checkperiod: 60 });
+    };
+
+    initForm('public');
+    initForm('admin');
+
+    // Form Submission logic (Full Update)
+    const setupFormSubmit = (scope) => {
+        const form = document.getElementById(`form_${scope}`);
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+            const payload = Object.fromEntries(formData.entries());
+
+            // Convert checkboxes
+            payload.is_active = document.getElementById(`active_${scope}`).checked;
+            payload.is_fallback_active = document.getElementById(`fallback_${scope}`).checked;
+
+            // Parse and validate JSON fields
+            try {
+                payload.redis_config = JSON.parse(payload.redis_config || '{}');
+                payload.upstash_config = JSON.parse(payload.upstash_config || '{}');
+                payload.node_cache_config = JSON.parse(payload.node_cache_config || '{}');
+            } catch (err) {
+                return Swal.fire('Invalid JSON', 'Please check your configuration syntax.', 'error');
+            }
+
+            // Cleanup ID if empty (for create)
+            if (!payload.id) delete payload.id;
+
+            console.log(`Saving ${scope} setup:`, payload);
+
+            try {
+                const result = await window.fetchData('cache-config', {
+                    method: 'POST',
+                    body: payload
+                });
+
+                if (result.status || result.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Synced!',
+                        text: `${scope.toUpperCase()} configuration updated.`,
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    if (result.data && result.data.id) {
+                        document.getElementById(`id_${scope}`).value = result.data.id;
+                    }
+                } else {
+                    Swal.fire('Error', result.message || 'Update failed', 'error');
+                }
+            } catch (error) {
+                Swal.fire('Sync Failed', 'Connection error', 'error');
+            }
+        });
+    };
+
+    // Status Toggle logic (PATCH /cache-config/:scope/toggle)
+    const setupStatusToggle = (scope) => {
+        const toggle = document.getElementById(`active_${scope}`);
+        toggle.addEventListener('change', async () => {
+            const is_active = toggle.checked;
+            console.log(`Toggling ${scope} status:`, is_active);
+            try {
+                const result = await window.fetchData(`cache-config/${scope}/toggle`, {
+                    method: 'PATCH',
+                    body: { is_active }
+                });
+                if (!result.status && !result.success) {
+                    toggle.checked = !is_active; // Revert
+                    Swal.fire('Error', result.message || 'Toggle failed', 'error');
+                }
+            } catch (err) {
+                toggle.checked = !is_active; // Revert
+                Swal.fire('Error', 'Connection failed', 'error');
+            }
+        });
+    };
+
+    setupFormSubmit('public');
+    setupFormSubmit('admin');
+    setupStatusToggle('public');
+    setupStatusToggle('admin');
+    }) ();
+</script>
+{{/section}}

@@ -1,0 +1,258 @@
+name: Build, Push (GHCR), Deploy (EC2)
+
+on:
+  push:
+    branches: [production]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+      tag: ${{ steps.meta.outputs.tag }}
+      package_name: ${{ steps.meta.outputs.package_name }}
+      owner_type: ${{ steps.meta.outputs.owner_type }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compute image metadata
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          tag="sha-${GITHUB_SHA}"
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "package_name=${GITHUB_REPOSITORY#*/}" >> "$GITHUB_OUTPUT"
+          echo "owner_type=${{ github.event.repository.owner.type }}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}
+
+  deploy_ec2:
+    runs-on: ubuntu-latest
+    needs: [build_and_push]
+    environment: production
+    steps:
+      - name: Deploy on EC2 (SSH)
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          IMAGE: ${{ needs.build_and_push.outputs.image }}
+          TAG: ${{ needs.build_and_push.outputs.tag }}
+          GHCR_USERNAME: ${{ secrets.GHCR_USERNAME }}
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+
+          NODE_ENV: ${{ secrets.NODE_ENV }}
+          PORT: ${{ secrets.PORT }}
+          API_URL: ${{ secrets.API_URL }}
+          INTERNAL_SECRET: ${{ secrets.INTERNAL_SECRET }}
+          JWT_PUBLIC_KEY_PATH: ${{ secrets.JWT_PUBLIC_KEY_PATH }}
+          UPLOAD_PATH: ${{ secrets.UPLOAD_PATH }}
+          DEBUG: ${{ secrets.DEBUG }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT || 22 }}
+          envs: IMAGE,TAG,GHCR_USERNAME,GHCR_TOKEN,NODE_ENV,PORT,API_URL,INTERNAL_SECRET,JWT_PUBLIC_KEY_PATH,UPLOAD_PATH,DEBUG
+          script: |
+            set -eu
+            (set -o pipefail) 2>/dev/null && set -o pipefail || true
+
+            docker_try() { docker "$@"; }
+            docker_run() {
+              if docker_try "$@"; then return 0; fi
+              if command -v sudo >/dev/null 2>&1; then sudo docker "$@"; else return 1; fi
+            }
+
+            : "${IMAGE:?Missing IMAGE}"
+            : "${TAG:?Missing TAG}"
+            : "${GHCR_USERNAME:?Missing GHCR_USERNAME}"
+            : "${GHCR_TOKEN:?Missing GHCR_TOKEN}"
+
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin || \
+              (command -v sudo >/dev/null 2>&1 && echo "$GHCR_TOKEN" | sudo docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin)
+
+            docker_run pull "${IMAGE}:${TAG}"
+
+            old_image="$(docker_run inspect -f '{{.Config.Image}}' admin 2>/dev/null || true)"
+
+            # Stop/remove old container (ignore if not present)
+            docker_run rm -f admin 2>/dev/null || true
+
+            # Run container; pass env from GitHub "Environment secrets"
+            set +e
+            docker_run run -d --restart unless-stopped \
+              --name admin \
+              -p "${PORT:-4000}:4000" \
+              -e "NODE_ENV=${NODE_ENV:-production}" \
+              -e "PORT=4000" \
+              -e "API_URL=${API_URL:-}" \
+              -e "INTERNAL_SECRET=${INTERNAL_SECRET:-}" \
+              -e "JWT_PUBLIC_KEY_PATH=${JWT_PUBLIC_KEY_PATH:-config/public.pem}" \
+              -e "UPLOAD_PATH=${UPLOAD_PATH:-./uploads}" \
+              -e "DEBUG=${DEBUG:-false}" \
+              -v admin_uploads:/app/uploads \
+              "${IMAGE}:${TAG}"
+            rc=$?
+            set -e
+
+            # Basic check
+            running="$(docker_run inspect -f '{{.State.Running}}' admin 2>/dev/null || echo false)"
+            if [ "$rc" -ne 0 ] || [ "$running" != "true" ]; then
+              echo "New container failed; attempting rollback..."
+              docker_run logs --tail 200 admin 2>/dev/null || true
+              docker_run rm -f admin 2>/dev/null || true
+              docker_run rmi -f "${IMAGE}:${TAG}" 2>/dev/null || true
+
+              if [ -n "${old_image}" ]; then
+                docker_run pull "${old_image}" 2>/dev/null || true
+                docker_run run -d --restart unless-stopped \
+                  --name admin \
+                  -p "${PORT:-4000}:4000" \
+                  -e "NODE_ENV=${NODE_ENV:-production}" \
+                  -e "PORT=4000" \
+                  -e "API_URL=${API_URL:-}" \
+                  -e "INTERNAL_SECRET=${INTERNAL_SECRET:-}" \
+                  -e "JWT_PUBLIC_KEY_PATH=${JWT_PUBLIC_KEY_PATH:-config/public.pem}" \
+                  -e "UPLOAD_PATH=${UPLOAD_PATH:-./uploads}" \
+                  -e "DEBUG=${DEBUG:-false}" \
+                  -v admin_uploads:/app/uploads \
+                  "${old_image}" || true
+              fi
+              exit 1
+            fi
+
+            # Keep only last 2 images for this repo on the EC2 host (by unique image ID)
+            ids="$(docker_run images "${IMAGE}" --format '{{.ID}}' | awk '!seen[$0]++')"
+            keep=0
+            for id in $ids; do
+              keep=$((keep+1))
+              if [ "$keep" -gt 2 ]; then
+                docker_run rmi -f "$id" 2>/dev/null || true
+              fi
+            done
+            docker_run image prune -f >/dev/null 2>&1 || true
+
+  promote_latest:
+    runs-on: ubuntu-latest
+    needs: [deploy_ec2, build_and_push]
+    if: ${{ needs.deploy_ec2.result == 'success' }}
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Promote to latest tag (only after successful deploy)
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker buildx imagetools create \
+            -t "${{ needs.build_and_push.outputs.image }}:latest" \
+            "${{ needs.build_and_push.outputs.image }}:${{ needs.build_and_push.outputs.tag }}"
+
+  ghcr_retention:
+    runs-on: ubuntu-latest
+    needs: [promote_latest, build_and_push]
+    if: ${{ needs.promote_latest.result == 'success' }}
+    steps:
+      - name: Keep only last 2 GHCR versions
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: ${{ needs.build_and_push.outputs.package_name }}
+          package-type: container
+          min-versions-to-keep: 2
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  cleanup_on_failure:
+    runs-on: ubuntu-latest
+    needs: [deploy_ec2, build_and_push]
+    if: ${{ needs.deploy_ec2.result != 'success' && needs.build_and_push.result == 'success' }}
+    steps:
+      - name: Delete just-built GHCR version (deploy failed)
+        uses: actions/github-script@v7
+        env:
+          PACKAGE_NAME: ${{ needs.build_and_push.outputs.package_name }}
+          SHA_TAG: ${{ needs.build_and_push.outputs.tag }}
+          OWNER_TYPE: ${{ needs.build_and_push.outputs.owner_type }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const packageName = process.env.PACKAGE_NAME;
+            const shaTag = process.env.SHA_TAG;
+            const ownerType = process.env.OWNER_TYPE; // "User" or "Organization"
+
+            const list = async (page) => {
+              const route =
+                ownerType === "Organization"
+                  ? "GET /orgs/{org}/packages/{package_type}/{package_name}/versions"
+                  : "GET /users/{username}/packages/{package_type}/{package_name}/versions";
+
+              const params =
+                ownerType === "Organization"
+                  ? { org: owner, package_type: "container", package_name: packageName, per_page: 100, page }
+                  : { username: owner, package_type: "container", package_name: packageName, per_page: 100, page };
+
+              const { data } = await github.request(route, params);
+              return data;
+            };
+
+            let page = 1;
+            let found = null;
+            while (!found) {
+              const versions = await list(page);
+              if (!versions.length) break;
+              found = versions.find(v => (v.metadata?.container?.tags || []).includes(shaTag));
+              page++;
+            }
+
+            if (!found) {
+              core.warning(`No GHCR package version found with tag ${shaTag}; nothing to delete.`);
+              return;
+            }
+
+            const delRoute =
+              ownerType === "Organization"
+                ? "DELETE /orgs/{org}/packages/{package_type}/{package_name}/versions/{package_version_id}"
+                : "DELETE /users/{username}/packages/{package_type}/{package_name}/versions/{package_version_id}";
+
+            const delParams =
+              ownerType === "Organization"
+                ? { org: owner, package_type: "container", package_name: packageName, package_version_id: found.id }
+                : { username: owner, package_type: "container", package_name: packageName, package_version_id: found.id };
+
+            await github.request(delRoute, delParams);
+            core.info(`Deleted GHCR version id=${found.id} (tag ${shaTag}).`);

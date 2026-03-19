@@ -1,0 +1,99 @@
+<div class="psr-profile-header">
+    <div class="psr-form-group">
+        <label class="psr-form-label">Feature Image</label>
+        <div class="psr-field-with-published">
+            <div class="feature-image-preview" id="feature-preview-container">
+                <div class="preview-thumb-wrapper round">
+                    <img src="{{#if data.profile}}{{data.profile.file}}{{else}}https://getdrawings.com/free-icon/preview-icon-69.png{{/if}}"
+                        alt="" class="preview-media round">
+                    <button type="button" class="remove-preview-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="add-new-file-box round" accept="image/*" data-file-picker="true" data-max-files="1"
+                    data-trigger-id="profile" data-preview-style="round" folder="admin-profile" access="{{user.access}}"
+                    data-remaining="0" style="display: none;">
+                    <i class="fas fa-camera"></i>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
+    <div class="psr-profile-title">
+        <h2 id="psr-fullname">{{data.firstName}} {{data.lastName}}</h2>
+        <p id="psr-designation">{{#if data.designation}}{{data.designation}}{{else}}Employee {{/if}}</p>
+    </div>
+    <button class="psr-profile-edit" id="psr-profile-edit" title="Edit"><i class="fa-solid fa-pen"></i></button>
+</div>
+
+<div class="psr-profile-body">
+    <form id="psr-profile-form" class="psr-form" autocomplete="off">
+        <input type="hidden" id="profile" name="profile" value="{{data.profile.id}}">
+        <div class="psr-grid psr-grid-col-2 gap-2">
+            <div class="psr-form-group">
+                <label class="psr-form-label">First Name</label>
+                <input type="text" class="psr-form-input" id="firstName" name="firstName" value="{{data.firstName}}">
+            </div>
+            <div class="psr-form-group">
+                <label class="psr-form-label">Last Name</label>
+                <input type="text" class="psr-form-input" id="lastName" name="lastName" value="{{data.lastName}}">
+            </div>
+            <div class="psr-form-group">
+                <label class="psr-form-label">Email</label>
+                <input type="email" class="psr-form-input" id="email" name="email" value="{{data.email}}">
+            </div>
+            <div class="psr-form-group">
+                <label class="psr-form-label">Mobile</label>
+                <input type="text" class="psr-form-input" id="mobile" name="mobile" value="{{data.mobile}}">
+            </div>
+            <div class="psr-form-group">
+                <label class="psr-form-label">Designation</label>
+                <input type="text" class="psr-form-input" id="designation" name="designation"
+                    value="{{data.designation}}">
+            </div>
+            <div class="psr-form-group">
+                <label class="psr-form-label">Address</label>
+                <input type="text" class="psr-form-input" id="address" name="address" value="{{ data.address}}">
+            </div>
+        </div>
+        <div class="psr-form-group">
+            <label class="psr-form-label">About</label>
+            <textarea class="psr-form-input psr-form-textarea" id="about" name="about"  type="editor"
+                data-tools="paragraph,header,list,link,table" >{{{data.about}}}</textarea>
+        </div>
+
+        <div class="psr-profile-actions">
+            <button type="button" class="psr-btn" id="psr-cancel" style="display:none">Cancel</button>
+            <button type="submit" class="psr-btn psr-btn-primary" id="psr-save" style="display:none">Save
+                Changes</button>
+        </div>
+    </form>
+
+    <div id="psr-profile-view" class="psr-profile-view">
+        <div class="psr-profile-grid">
+            <div><strong>First Name</strong>
+                <p id="v-firstName">{{data.firstName}}</p>
+            </div>
+            <div><strong>Last Name</strong>
+                <p id="v-lastName">{{data.lastName}}</p>
+            </div>
+            <div><strong>Email</strong>
+                <p id="v-email">{{data.email}}</p>
+            </div>
+            <div><strong>Mobile</strong>
+                <p id="v-mobile">{{data.mobile}}</p>
+            </div>
+            <div><strong>Designation</strong>
+                <p id="v-designation">{{data.designation}}</p>
+            </div>
+            <div><strong>Address</strong>
+                <p id="v-address">{{data.address}}</p>
+            </div>
+            <div class="psr-grid-col-1"><strong>About</strong>
+                <p id="v-about">{{{editor data.about}}}</p>
+            </div>
+        </div>
+    </div>
+</div>

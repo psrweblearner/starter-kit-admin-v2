@@ -1,0 +1,116 @@
+<div class="psr-common-widgets">
+    <!-- Quick Info Cards -->
+    <div class="psr-grid psr-grid-col-2 gap-1 mb-2">
+        <div class="psr-premium-stat psr-stat-time">
+            <div class="psr-stat-icon"><i class="fa-solid fa-clock"></i></div>
+            <div class="psr-stat-details">
+                <span class="psr-stat-subtitle">System Time</span>
+                <span class="psr-stat-main" id="widget-time">00:00:00</span>
+            </div>
+        </div>
+        <div class="psr-premium-stat psr-stat-date">
+            <div class="psr-stat-icon"><i class="fa-solid fa-calendar-check"></i></div>
+            <div class="psr-stat-details">
+                <span class="psr-stat-subtitle">Current Date</span>
+                <span class="psr-stat-main" id="widget-date">Loading...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Widget -->
+    <div class="psr-card">
+        <div class="psr-card-header">
+            <h3 class="psr-card-title"><i class="fa-solid fa-calendar-days mr-2"></i>Calendar</h3>
+        </div>
+        <div class="psr-card-body p-0">
+            <div id="psr-calendar"></div>
+        </div>
+    </div>
+
+    <!-- Quick Info List -->
+    <div class="psr-card mt-2">
+        <div class="psr-card-header">
+            <h3 class="psr-card-title"><i class="fa-solid fa-circle-info mr-2"></i>Quick Info</h3>
+        </div>
+        <div class="psr-card-body">
+            <ul class="psr-themed-list">
+                <li>
+                    <i class="fa-solid fa-cloud-bolt text-brand"></i>
+                    <span>Real-time Data Sync Active</span>
+                </li>
+                <li>
+                    <i class="fa-solid fa-database text-brand"></i>
+                    <span>System Database Healthy</span>
+                </li>
+                <li>
+                    <i class="fa-solid fa-shield-halved text-span"></i>
+                    <span>Enforced Security Enabled</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        function updateWidgetTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const dateStr = now.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+            
+            const timeEl = document.getElementById('widget-time');
+            const dateEl = document.getElementById('widget-date');
+            
+            if (timeEl) timeEl.textContent = timeStr;
+            if (dateEl) dateEl.textContent = dateStr;
+            
+            setTimeout(updateWidgetTime, 1000);
+        }
+        
+        function generateCalendar() {
+            const calendarEl = document.getElementById('psr-calendar');
+            if (!calendarEl) return;
+            
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            
+            let html = `
+                <div class="psr-calendar-nav">
+                    <span>${monthNames[month]} ${year}</span>
+                </div>
+                <table class="psr-calendar-grid">
+                    <thead>
+                        <tr>
+                            <th>SUN</th><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>SAT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+            `;
+            
+            for (let i = 0; i < firstDay; i++) {
+                html += '<td></td>';
+            }
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                if ((day + firstDay - 1) % 7 === 0 && day > 1) {
+                    html += '</tr><tr>';
+                }
+                const isToday = day === now.getDate() ? 'class="today"' : '';
+                html += `<td ${isToday}><span>${day}</span></td>`;
+            }
+            
+            html += '</tr></tbody></table>';
+            calendarEl.innerHTML = html;
+        }
+        
+        updateWidgetTime();
+        generateCalendar();
+    });
+</script>

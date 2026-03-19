@@ -1,0 +1,114 @@
+<div class="psr-card">
+    <div class="psr-card-header">
+        <h3 class="psr-card-title">Add New Developer</h3>
+    </div>
+    <div class="psr-card-body">
+        <div class="psr-tabs" data-psr-tabs>
+            <div class="psr-tablist" role="tablist" aria-label="Sample Tabs">
+                <button role="tab" class="psr-tab active" aria-selected="true" aria-controls="tab-panel-1"
+                    id="tab-1">Home</button>
+            </div>
+            <div tabindex="0" role="tabpanel" class="psr-tab-panel active" id="tab-panel-1" aria-labelledby="tab-1">
+                <form id="psr-developer-form" class="psr-form" autocomplete="off">
+                  <div class="psr-form-group">
+                        <label class="psr-form-label">Developer Logo</label>
+                        <div class="psr-field-with-published">
+                            <div class="feature-image-preview" data-trigger-id="developer_img">
+                                <div class="add-new-file-box round" accept="image/*" data-file-picker="true" data-max-files="1" data-trigger-id="developer_img" data-preview-style="round" folder="developer" access="{{user.access}}">
+                                    <i class="fas fa-camera"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" id="developer_img" name="logo">
+                    </div>
+
+                    <div class="psr-grid psr-grid-col-2 gap-2">
+                        <div class="psr-form-group">
+                            <label class="psr-form-label">Name</label>
+                            <input type="text" class="psr-form-input" id="name" name="name"
+                                placeholder="Enter Name">
+                        </div>
+                        <div class="psr-form-group">
+                            <label class="psr-form-label">Slug</label>
+                            <input type="text" class="psr-form-input" id="slug" name="slug"
+                                placeholder="Enter slug">
+                        </div>
+                    </div>
+                    <div class="psr-form-group">
+                        <label class="psr-form-label">Tagline</label>
+                        <textarea class="psr-form-input psr-form-textarea" id="tagline" name="tagline"></textarea>
+                    </div>
+                    <div class="psr-form-group">
+                        <label class="psr-form-label">Description</label>
+                        <textarea class="psr-form-input psr-form-textarea" id="description" name="description" type="editor"
+                             data-tools="paragraph,header,list,linkTool,table"></textarea>
+                    </div>
+                    <div class="psr-profile-actions">
+                        <button type="submit" class="psr-btn psr-btn-primary" id="psr-save">Create</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{{#section 'script'}}
+<script>
+    $('#psr-developer-form').psrValidate({
+        rules: {
+            name: { required: true, minLength: 2 },
+            slug: { required: true, minLength: 2 },
+            tagline:{required:true},
+            description:{required:true},
+            logo:{required:true}
+        },
+        messages: {
+            name: { required: 'Please enter name', minLength: 'Name should be more then 2 characters' },
+            slug: { required: 'Please enter slug', minLength: 'Slug should be more then 2 characters' },
+            tagline:{required:'Tagline is required'},
+            description:{required:'Description is required'},
+            logo:{required:'Logo is required'}
+        },
+        beforeSubmit: function () {
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            $btn.prop('disabled', true);
+            if (!$btn.find('.psr-spinner').length) {
+                $btn.prepend('<span class="psr-spinner"></span> ');
+            }
+        },
+        onValid: function () {
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            $.ajax({
+                url: api(`developer`),   // change this
+                method: 'POST',
+                data: $form.serialize(),
+                success: function (res) {
+                    $form[0].reset();
+                    toastr.success('Form submitted successfully!');
+                    $form.find('.success, .error').removeClass('success error');
+                    $form.find('.psr-field-error').remove();
+                },
+                error: function (err) {
+                    toastr.error('An error occurred while submiting.' + err.message);
+                },
+                complete: function () {
+                    // 🔹 always reset button
+                    $btn.prop('disabled', false);
+                    $btn.find('.psr-spinner').remove();
+                }
+            });
+
+            return false;
+        },
+        onInvalid: function () {
+            toastr.error('Please correct the errors in the form.');
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            $btn.prop('disabled', false);
+            $btn.find('.psr-spinner').remove();
+        }
+    });
+</script>
+{{/section}}

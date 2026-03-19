@@ -1,0 +1,198 @@
+{{#section 'style'}}
+<style>
+  .psr-modal{
+    width: 400px!important;
+  }
+</style>
+{{/section}}
+<div class="psr-card psr-card-compact">
+  {{#if (or (canAccess 'create') (canAccess 'download'))}}
+  <div class="psr-card-header">
+    <h5 class="psr-card-title">
+      {{#if (canAccess 'create')}}
+      <button class="psr-btn psr-btn-primary psr-btn-icon" title="Create New User" data-psr-modal="role-modal">
+        <i class="fa-solid fa-plus"></i>
+      </button>
+      {{/if}}
+
+      {{#if (canAccess 'download')}}
+      <button class="psr-btn psr-btn-primary psr-btn-icon js-download-data" title="Download Data"
+        data-owner-field="createdBy" data-owner-value="{{user.id}}" data-api="roles" data-filter-cols='["status"]'>
+        <i class="fa-solid fa-download"></i>
+      </button>
+      {{/if}}
+    </h5>
+  </div>
+  {{/if}}
+
+  <div class="psr-card-body">
+    <table id="role-table" class="psr-table" data-api="roles" data-filter="true" data-filter-fields="*"
+      data-actions="true" data-default-field="title" data-page-size="5" data-sticky-header="true"
+      data-toggle-field="status" data-access="{{user.access}}">
+    </table>
+  </div>
+</div>
+
+
+<div class="psr-modal-overlay" id="role-modal">
+    <div class="psr-modal">
+        <div class="psr-modal-header">
+            <h3 class="psr-modal-title">Add New Role</h3>
+            <button class="psr-modal-close">&times;</button>
+        </div>
+        <div class="psr-modal-body">
+            <form class="psr-form" id="roleForm" autocomplete="off">
+                <div class="psr-form-group">
+                    <div class="psr-input-outline">
+                        <input type="text" id="title" name="title" class="psr-form-input psr-input-floating" placeholder="Enter role name">
+                        <label class="psr-floating-label" for="title">Enter Role Name</label>
+                    </div>
+                </div>
+                <div class="psr-modal-footer">
+                    <button type="submit" class="psr-btn psr-btn-primary">Add Role</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{#section 'script'}}
+<script>
+  PSRDataTable.setHandlers({
+    edit: function (id, rowData, tableInstance) {
+      window.location.href = `/admin/{{category}}/{{menu}}/${id}`
+    },
+
+    delete: async function (id, rowData, tableInstance) {
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+      });
+
+      if (result.isConfirmed) {
+        try {
+          const response = await fetch(api(`roles/${id}`), {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          if (response.ok) {
+            Swal.fire(
+              'Deleted!',
+              'Role has been deleted.',
+              'success'
+            );
+            tableInstance.reloadData();
+          } else {
+            const errorData = await response.json();
+            Swal.fire(
+              'Failed!',
+              `Failed to delete feature: ${errorData.message || response.statusText}`,
+              'error'
+            );
+          }
+        } catch (error) {
+          Swal.fire(
+            'Error!',
+            `Error deleting feature: ${error.message}`,
+            'error'
+          );
+        }
+      }
+    },
+
+    toggle: async function (id, field, newValue, rowData, tableInstance) {
+      try {
+        const response = await fetch(api(`roles/${id}/status`), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newValue })
+        });
+
+        if (response.ok) {
+          Swal.fire(
+            'Updated!',
+            'Role status updated successfully.',
+            'success'
+          );
+          tableInstance.reloadData();
+        } else {
+          const errorData = await response.json();
+          Swal.fire(
+            'Failed!',
+            `Failed to update status: ${errorData.message || response.statusText}`,
+            'error'
+          );
+        }
+      } catch (error) {
+        Swal.fire(
+          'Error!',
+          `Error updating status: ${error.message}`,
+          'error'
+        );
+      }
+
+    }
+  });
+
+
+  $('#roleForm').psrValidate({
+    rules: {
+        title: { required: true, minLength: 2 }
+    },
+    messages: {
+        title: { required: 'Please enter role name', minLength: 'At least 2 characters' },
+    },
+    beforeSubmit: function () {
+        var $form = $(this);
+        var $btn = $form.find('button[type=submit]');
+        $btn.prop('disabled', true);
+        if (!$btn.find('.psr-spinner').length) {
+            $btn.prepend('<span class="psr-spinner"></span> ');
+        }
+    },
+    onValid: function () {
+        var $form = $(this);
+        var $btn = $form.find('button[type=submit]');
+        $.ajax({
+            url: api('roles'),   // change this
+            method: 'POST',
+            data: $form.serialize(),
+            success: function (res) {
+                $form[0].reset();
+                toastr.success('Form submitted successfully!');
+                $form.find('.success, .error').removeClass('success error');
+                $form.find('.psr-field-error').remove();
+                psrModals.closeModal(document.getElementById('role-modal'));
+                 setTimeout(() => {window.location.reload();}, 500);
+                
+            },
+            error: function (err) {
+                toastr.error('An error occurred while submiting.' + err.message);
+            },
+            complete: function () {
+                // 🔹 always reset button
+                $btn.prop('disabled', false);
+                $btn.find('.psr-spinner').remove();
+            }
+        });
+
+        return false;
+    },
+    onInvalid: function () {
+        toastr.error('Please correct the errors in the form.');
+        var $form = $(this);
+        var $btn = $form.find('button[type=submit]');
+        // reset button if invalid
+        $btn.prop('disabled', false);
+        $btn.find('.psr-spinner').remove();
+    }
+});
+
+</script>
+{{/section}}

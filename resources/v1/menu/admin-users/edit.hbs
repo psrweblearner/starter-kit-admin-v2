@@ -1,0 +1,401 @@
+{{#section 'style'}}
+<style>
+    .pp-select-all-wrap {
+        display: none;
+    }
+</style>
+{{/section}}
+<div class="psr-card">
+    <div class="psr-card-header">
+        <h3 class="psr-card-title">{{data.firstName}} {{data.lastName}}</h3>
+    </div>
+    <div class="psr-card-body">
+        <div class="psr-tabs" data-psr-tabs>
+            <div class="psr-tablist" role="tablist" aria-label="Sample Tabs">
+                <button role="tab" class="psr-tab active" aria-selected="true" aria-controls="tab-panel-1"
+                    id="tab-1">Overview</button>
+                <button role="tab" class="psr-tab" aria-selected="false" aria-controls="tab-panel-2" id="tab-2">Role
+                    Assign</button>
+                <button role="tab" class="psr-tab" aria-selected="false" aria-controls="tab-panel-3" id="tab-3">Special
+                    Access</button>
+            </div>
+            <div tabindex="0" role="tabpanel" class="psr-tab-panel active" id="tab-panel-1" aria-labelledby="tab-1">
+                {{> profile/general-tabs data=data}}
+            </div>
+            <div tabindex="0" role="tabpanel" class="psr-tab-panel" id="tab-panel-2" aria-labelledby="tab-2">
+                {{> profile/role-tabs data=data}}
+            </div>
+            <div tabindex="0" role="tabpanel" class="psr-tab-panel" id="tab-panel-3" aria-labelledby="tab-3">
+                {{> profile/special-access-tabs data=data}}
+            </div>
+        </div>
+    </div>
+</div>
+{{#section 'script'}}
+<script src="/admin/js/profile.js"></script>
+<script>
+    const roles = {{{ json data.roles }}} || [];
+    $('#psr-profile-form').psrValidate({
+        rules: {
+            firstName: { required: true, minLength: 2 },
+            lastName: { required: true, minLength: 2 },
+            email: { required: true, email: true },
+            mobile: { required: true, phone: true },
+            designation: { required: true },
+            address: { required: true },
+            about: { richRequired: true, richMinChars: 10 },
+            profile: { required: false }
+        },
+        messages: {
+            firstName: { required: 'Please enter your first name', minLength: 'At least 2 characters' },
+            lastName: { required: 'Please enter your last name', minLength: 'At least 2 characters' },
+            email: { required: 'Email is required', email: 'Enter a valid email' },
+            mobile: { required: 'Mobile is required', phone: 'Enter a valid mobile number' },
+            designation: { required: 'Designation is required' },
+            address: { required: 'Address is required' },
+            about: { richRequired: 'About cannot be empty', richMinChars: 'Minmum 10 characters' },
+            profile: { required: 'Please select profile image' }
+        },
+        beforeSubmit: function () {
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            $btn.prop('disabled', true);
+            if (!$btn.find('.psr-spinner').length) {
+                $btn.prepend('<span class="psr-spinner"></span> ');
+            }
+        },
+        onValid: function () {
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            $.ajax({
+                url: api('admin') + '/' + '{{data.id}}',   // Update endpoint
+                method: 'PUT',
+                xhrFields: {
+                    withCredentials: true
+                },
+                data: $form.serialize(),
+                success: function (res) {
+                    toastr.success('Form submitted successfully!');
+                    $form.find('.success, .error').removeClass('success error');
+                    $form.find('.psr-field-error').remove();
+                },
+                error: function (err) {
+                    toastr.error('An error occurred while submiting.' + err.message);
+                },
+                complete: function () {
+                    // 🔹 always reset button
+                    $btn.prop('disabled', false);
+                    $btn.find('.psr-spinner').remove();
+                }
+            });
+
+            return false;
+        },
+        onInvalid: function () {
+            toastr.error('Please correct the errors in the form.');
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            // reset button if invalid
+            $btn.prop('disabled', false);
+            $btn.find('.psr-spinner').remove();
+        }
+    });
+    $('#roleId').PSRMultiselect({
+        onChange: function (selectedValues) {
+            const wrapper = $('#roleAccessWrapper');
+            wrapper.empty();
+
+            selectedValues.forEach(roleId => {
+                const roleName = $(`#roleId option[value="${roleId}"]`).text();
+                // find access value for this role (if exists)
+                const savedAccess = roles.find(r => r.id == roleId)?.AdminUserRole?.access || '';
+                wrapper.append(`
+                <div class="psr-form-group">
+                    <label class="psr-form-label">${roleName} - Data Access</label>
+                    <select name="access[${roleId}]" class="psr-form-input">
+                        <option value="own" ${savedAccess === 'own' ? 'selected' : ''}>Own</option>
+                        <option value="full" ${savedAccess === 'full' ? 'selected' : ''}>Full</option>
+                    </select>
+                </div>
+            `);
+            });
+        },
+        onDataLoaded: function (selectedValues) {
+            // This triggers only after options are loaded
+            this.settings.onChange(selectedValues);
+        }
+    });
+    setTimeout(() => {
+        const selectedValues = $('#roleId').val() || [];
+        if (selectedValues.length > 0) {
+            const wrapper = $('#roleAccessWrapper').empty();
+            selectedValues.forEach(roleId => {
+                const roleName = $(`#roleId option[value="${roleId}"]`).text();
+
+                // Try different ways to find the access value
+                let savedAccess = '';
+                const roleData = roles.find(r => r.id == roleId || r.id == parseInt(roleId));
+                if (roleData) {
+                    savedAccess = roleData.access || roleData.AdminUserRole?.access || '';
+                }
+                wrapper.append(`
+                <div class="psr-form-group">
+                    <label class="psr-form-label">${roleName} - Data Access</label>
+                    <select name="access[${roleId}]" class="psr-form-input">
+                        <option value="own" ${savedAccess === 'own' ? 'selected' : ''}>Own</option>
+                        <option value="full" ${savedAccess === 'full' ? 'selected' : ''}>Full</option>
+                    </select>
+                </div>
+            `);
+            });
+        }
+    }, 500);
+
+    $('#roleFrm').psrValidate({
+        rules: {
+            roleId: { required: true, minSelected: 1 },
+            access: { required: true },
+            adminUserId: { required: true }
+        },
+        messages: {
+            roleId: { required: 'Please select at least one role', minSelected: 'Select at least one role' },
+            access: { required: 'Please select Data Access' },
+            adminUserId: { required: 'Please Select User id' }
+        },
+        beforeSubmit: function () {
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            $btn.prop('disabled', true);
+            if (!$btn.find('.psr-spinner').length) {
+                $btn.prepend('<span class="psr-spinner"></span> ');
+            }
+        },
+        onValid: function () {
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            $.ajax({
+                url: api('assign-role-user'),   // change this
+                method: 'POST',
+                data: $form.serialize(),
+                success: function (res) {
+                    toastr.success('Form submitted successfully!');
+                    $form.find('.success, .error').removeClass('success error');
+                    $form.find('.psr-field-error').remove();
+                },
+                error: function (err) {
+                    toastr.error('An error occurred while submiting.' + err.message);
+                },
+                complete: function () {
+                    // 🔹 always reset button
+                    $btn.prop('disabled', false);
+                    $btn.find('.psr-spinner').remove();
+                }
+            });
+
+            return false;
+        },
+        onInvalid: function () {
+            toastr.error('Please correct the errors in the form.');
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            // reset button if invalid
+            $btn.prop('disabled', false);
+            $btn.find('.psr-spinner').remove();
+        }
+    });
+
+
+
+    $(function () {
+        const groupedData = [];
+        const selected = {};
+
+        if (roles && roles.length) {
+            roles.forEach(role => {
+                const roleGroup = {
+                    roleId: role.id,
+                    roleTitle: role.title,
+                    pages: (role.pages || []).map(p => {
+                        let actions = [];
+                        if (p.Permission?.actions) {
+                            if (Array.isArray(p.Permission.actions)) {
+                                actions = p.Permission.actions;
+                            } else {
+                                try {
+                                    actions = JSON.parse(p.Permission.actions);
+                                } catch (e) {
+                                    console.warn(`Error parsing actions for page ${p.id}:`, e);
+                                    actions = [];
+                                }
+                            }
+                        }
+
+                        selected[`${role.id}_${p.id}`] = {
+                            create: actions.includes("create"),
+                            read: actions.includes("read"),
+                            update: actions.includes("update"),
+                            delete: actions.includes("delete"),
+                            download: actions.includes("download"),
+                        };
+
+                        return {
+                            id: p.id,
+                            title: p.title,
+                            roleId: role.id,
+                        };
+                    }),
+                };
+
+                groupedData.push(roleGroup);
+            });
+        }
+
+        initializePermissions();
+
+        function initializePermissions() {
+            const $pp = $("#psr-page-permissions");
+
+            if (!roles || roles.length === 0) {
+                $pp.html(`
+                <div class="psr-alert psr-alert-info">
+                    <h4>No Roles Assigned</h4>
+                    <p>This user has no roles assigned. Please assign roles first in the "Role Assign" tab before setting special permissions.</p>
+                </div>
+            `);
+                return;
+            }
+
+            renderPermissions($pp);
+        }
+
+        function renderPermissions($pp) {
+            $pp.PSRPagePermissions({
+                data: groupedData,
+                selected: selected,
+            });
+
+            setTimeout(() => {
+                $pp.empty();
+                $pp.PSRPagePermissions({
+                    data: groupedData,
+                    selected: selected,
+                });
+            }, 100);
+        }
+
+        // 🔁 Removed ambiguous findRoleIdByPage helper as roleId is now stored in data attributes
+
+        // 🟩 When clicking the MAIN checkbox
+        $("#psr-page-permissions").on("change", ".pp-page", function () {
+            const $row = $(this).closest(".pp-row");
+            const pageId = parseInt($row.data("id"));
+            const roleId = parseInt($row.data("role-id"));
+            const checked = $(this).is(":checked");
+
+            if (!roleId || !pageId) return;
+
+            // toggle all action switches inside this row
+            $row.find(".pp-action input[type='checkbox']").prop("checked", checked);
+
+            const actions = checked
+                ? ["create", "read", "update", "delete", "download"]
+                : [];
+
+            sendPermissionUpdate({ pageId, roleId, actions });
+        });
+        $('#pp-reset').on('click', function () {
+            const adminUserId = parseInt("{{data.id}}");
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This will remove all special permissions and reset to default role permissions.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, reset it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: api('reset-special-permissions'),
+                        type: 'DELETE',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ adminUserId }),
+                        success: res => {
+                            if (res.status) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Reset Successful',
+                                    text: 'Special permissions have been reset to default.',
+                                    timer: 1800,
+                                    showConfirmButton: false
+                                });
+                                // Reinitialize permission UI
+                                initializePermissions();
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Reset Failed',
+                                    text: res.message || 'Failed to reset permissions.'
+                                });
+                            }
+                        },
+                        error: xhr => {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: xhr.responseJSON?.message || 'Error resetting permissions.'
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        // 🟨 When clicking an individual action toggle
+        $("#psr-page-permissions").on("change", ".pp-action input[type='checkbox']", function () {
+            const $row = $(this).closest(".pp-row");
+            const pageId = parseInt($row.data("id"));
+            const roleId = parseInt($row.data("role-id"));
+
+            if (!roleId || !pageId) return;
+
+            // collect only checked actions
+            const actions = [];
+            $row.find(".pp-action").each(function () {
+                const action = $(this).data("action");
+                const isChecked = $(this).find("input[type='checkbox']").is(":checked");
+                if (isChecked) actions.push(action);
+            });
+
+            // if no actions left, uncheck main page box too
+            $row.find(".pp-page").prop("checked", actions.length > 0);
+
+            sendPermissionUpdate({ pageId, roleId, actions });
+        });
+
+        // 🚀 Ajax helper
+        function sendPermissionUpdate({ pageId, roleId, actions }) {
+            $.ajax({
+                url: api("assign-special-permissions"),
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    adminUserId: parseInt("{{data.id}}"),
+                    roleId,
+                    pageId,
+                    actions, // full array sent now
+                }),
+                success: (res) => {
+                    if (res.status) toastr.success(res.message);
+                    else toastr.error(res.message);
+                },
+                error: (xhr) =>
+                    toastr.error(xhr.responseJSON?.message || "Error updating permission"),
+            });
+        }
+    });
+
+</script>
+{{/section}}

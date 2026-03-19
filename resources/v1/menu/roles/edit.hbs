@@ -1,0 +1,107 @@
+<div class="psr-card">
+    <div class="psr-card-header">
+        <h2 class="psr-card-title">{{data.title}}-Page Permissions</h2>
+        <p class="psr-card-subtitle">Tick a page to grant all CRUD. Turn off Read to revoke access.</p>
+    </div>
+    <div class="psr-card-body">
+        <div id="psr-page-permissions" class="psr-page-permissions" data-url="sub-menu" data-root="data"></div>
+
+        <div class="psr-permissions-actions text-end my-5">
+            <button type="button" class="psr-btn" id="pp-reset">Reset</button>
+            <button type="button" class="psr-btn psr-btn-primary" id="pp-save">Save</button>
+        </div>
+    </div>
+</div>
+{{#section 'script'}}
+<script>
+    $(function () {
+        const pages = {{{ json data.pages }}} || [];
+    const selected = {};
+    const roleId = "{{data.id}}" || new URLSearchParams(window.location.search).get('id') || window.location.pathname.split('/').pop();
+
+    if (!roleId || roleId === 'undefined' || roleId === 'null') {
+        console.error('Role ID is missing. Cannot initialize permissions component.');
+        toastr.error('Role ID is missing. Please refresh the page and try again.');
+        return;
+    }
+
+    if (pages.length > 0) {
+        pages.forEach(p => {
+            if (p.Permission && p.Permission.actions) {
+                let actions = [];
+                if (Array.isArray(p.Permission.actions)) {
+                    actions = p.Permission.actions;
+                } else {
+                    try {
+                        actions = JSON.parse(p.Permission.actions);
+                    } catch (e) {
+                        console.warn(`Error parsing actions for page ${p.id}:`, e);
+                        actions = [];
+                    }
+                }
+
+                if (actions.length > 0) {
+                    selected[`${roleId}_${p.id}`] = {
+                        create: actions.includes("create"),
+                        read: actions.includes("read"),
+                        update: actions.includes("update"),
+                        delete: actions.includes("delete"),
+                        download: actions.includes("download")
+                    };
+                }
+            }
+        });
+    }
+
+    const $pp = $('#psr-page-permissions').PSRPagePermissions({
+        dataUrl: $('#psr-page-permissions').data('url'),
+        dataRoot: $('#psr-page-permissions').data('root'),
+        selected: selected,
+        roleId: roleId  // This is the key fix - set the roleId in settings
+    });
+
+    $('#pp-reset').on('click', function () {
+        $('#psr-page-permissions').PSRPagePermissions('reset');
+    });
+
+    $('#pp-save').on('click', function () {
+        const $pp = $('#psr-page-permissions');
+        const apiData = $pp.data('psr-pp-api');
+
+        if (!apiData) {
+            alert('Permission component not initialized.');
+            return;
+        }
+
+        // Get role ID from data, with fallback to URL parameter
+        const roleId = "{{data.id}}" || new URLSearchParams(window.location.search).get('id') || window.location.pathname.split('/').pop();
+
+        if (!roleId || roleId === 'undefined' || roleId === 'null') {
+            toastr.error('Role ID is missing. Please refresh the page and try again.');
+            return;
+        }
+
+        let payload = apiData.getPayload(); // No need to pass roleId here since it's set in settings
+        payload = payload.filter(item => item.actions.includes("read"));
+        if (payload.length === 0) {
+            toastr.warning('No valid permissions selected. Each page must have at least "read".');
+            return;
+        }
+
+        $.ajax({
+            url: api('assign-page-role'),
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ payload }),
+            success: function (res) {
+                toastr.success('Form submitted successfully!');
+            },
+            error: function (err) {
+                toastr.error('An error occurred while submiting.' + err.message);
+            }
+        });
+    });
+
+    });
+</script>
+{{/section}}

@@ -1,0 +1,22 @@
+<form id="blogGallery" class="psr-form" autocomplete="off">
+    <div class="psr-grid psr-grid-col-2 gap-2">
+        <div class="psr-form-group">
+            <label class="psr-form-label">Gallery Images *</label>
+            <div class="psr-field-with-published">
+                <select class="psr-form-input" id="gallery" name="gallery" multiple data-url="gallery" data-root="data"
+                    data-value-field="id" data-label-field="title" 
+                    data-image-field="file_id.file" data-selected='{{ pluck data.galleries "id" }}' data-placeholder="Gallery Images">
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="psr-form-actions">
+        <button type="submit" class="psr-btn psr-btn-primary"><i class="fa-solid fa-save"></i> Add to Gallery
+        </button>
+    </div>
+</form>
+<div class="psr-card-body">
+    <table id="blog-gallery-table" class="psr-basic-datatable" selected-data="{{json data.galleries}}"
+        data-actions="false" data-default-field="file_id.file,title,description" data-page-size="5">
+    </table>
+</div>

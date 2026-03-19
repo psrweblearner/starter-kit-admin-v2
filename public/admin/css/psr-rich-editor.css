@@ -1,0 +1,500 @@
+/* PSR Rich Editor - Fully Responsive CSS */
+
+/* ========================================
+   BASE CONTAINER STYLES
+   ======================================== */
+.psr-rich-editor-container {
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  position: relative;
+  overflow: visible;
+  min-height: 200px;
+  width: 100%;
+  z-index: 1;
+  transition: border-color 0.2s ease;
+}
+
+.psr-rich-editor-container:hover {
+  border-color: #4b2c85;
+}
+
+/* ========================================
+   EDITOR CONTENT - RESPONSIVE
+   ======================================== */
+.psr-rich-editor-container .codex-editor {
+  padding: 20px;
+  min-height: 150px;
+  background: #fafbfc;
+  border-radius: 6px;
+  margin: 8px;
+  width: calc(100% - 16px);
+  font-size: 16px;
+  line-height: 1.6;
+  color: #2d3748;
+  transition: background 0.2s ease;
+}
+
+.psr-rich-editor-container .codex-editor:focus-within {
+  background: #ffffff;
+}
+
+/* Content Width - Responsive */
+.psr-rich-editor-container .ce-block__content {
+  max-width: 80% !important;
+  margin: 0 auto !important;
+}
+
+/* ========================================
+   TOOLBAR - DESKTOP (Default)
+   ======================================== */
+.psr-rich-editor-container .ce-toolbar__actions {
+  position: absolute;
+  right: 100%;
+  opacity: 0;
+  display: flex;
+  padding-right: 123px;
+  transition: opacity 0.2s ease;
+  z-index: 100;
+}
+
+.psr-rich-editor-container .ce-toolbar--opened .ce-toolbar__actions {
+  opacity: 1;
+}
+
+/* ========================================
+   RESPONSIVE BREAKPOINTS
+   ======================================== */
+
+/* LARGE DESKTOP (> 1440px) */
+@media (min-width: 1441px) {
+  .psr-rich-editor-container .ce-block__content {
+    max-width: 800px !important; /* Keep a readable line length */
+    margin: 0 auto !important;
+  }
+}
+
+/* LAPTOP (1024px - 1440px) */
+@media (min-width: 1024px) and (max-width: 1440px) {
+  .psr-rich-editor-container .ce-block__content {
+    max-width: 85% !important;
+  }
+  
+  .psr-rich-editor-container .codex-editor {
+    padding: 18px;
+    font-size: 15px;
+  }
+  
+  .psr-rich-editor-container .ce-toolbar__actions {
+    padding-right: 10px;
+  }
+}
+
+/* TABLET (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .psr-rich-editor-container {
+    min-height: 180px;
+  }
+  
+  .psr-rich-editor-container .codex-editor {
+    padding: 16px;
+    min-height: 130px;
+    font-size: 15px;
+    margin: 6px;
+    width: calc(100% - 12px);
+  }
+  
+  .psr-rich-editor-container .ce-block__content {
+    max-width: 90% !important;
+  }
+  
+  .psr-rich-editor-container .ce-toolbar__actions {
+    padding-right: 5px;
+    z-index: 100 !important;
+  }
+  
+  /* Toolbar buttons - tablet friendly */
+  .psr-rich-editor-container .ce-toolbar__actions .ce-toolbar__button {
+    min-width: 36px !important;
+    min-height: 36px !important;
+    padding: 8px !important;
+  }
+}
+
+/* MOBILE (up to 767px) */
+@media (max-width: 767px) {
+  .psr-rich-editor-container {
+    min-height: 250px;
+    border-radius: 6px;
+    padding-left: 28px; /* Room for left icons */
+  }
+  
+  .psr-rich-editor-container .codex-editor {
+    padding: 10px;
+    min-height: 200px;
+    font-size: 14px;
+    margin: 4px;
+    width: 100%;
+    border-radius: 4px;
+  }
+  
+  /* Full width content on mobile */
+  .psr-rich-editor-container .ce-block__content {
+    max-width: 100% !important;
+    padding: 0 !important;
+    padding-left: 10px !important;
+  }
+
+  /* Improve inline toolbar for mobile touch */
+  .ce-inline-toolbar {
+    z-index: 1000 !important;
+    transform: scale(1.1); /* Slightly larger for easier tapping */
+    transform-origin: bottom center;
+  }
+  
+  /* Mobile toolbar positioning: Float left instead of right */
+  .psr-rich-editor-container .ce-toolbar__actions {
+    position: absolute !important;
+    left: -28px !important;
+    right: auto !important;
+    top: 0 !important;
+    bottom: auto !important;
+    padding-right: 0 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
+    z-index: 101 !important;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 4px 0 0 4px;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.05);
+  }
+  
+  /* Ensure toolbar buttons are visible and touch-friendly on mobile */
+  .psr-rich-editor-container .ce-toolbar__plus,
+  .psr-rich-editor-container .ce-toolbar__settings-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    opacity: 1 !important;
+    visibility: visible !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    margin: 0 !important;
+    border-bottom: 1px solid #edf2f7;
+  }
+
+  .psr-rich-editor-container .ce-toolbar__plus:last-child,
+  .psr-rich-editor-container .ce-toolbar__settings-btn:last-child {
+    border-bottom: none;
+  }
+}
+
+/* EXTRA SMALL MOBILE (up to 480px) */
+@media (max-width: 480px) {
+  .psr-rich-editor-container {
+    min-height: 150px;
+    padding-left: 24px;
+  }
+  
+  .psr-rich-editor-container .codex-editor {
+    padding: 8px;
+    min-height: 120px;
+  }
+
+  .ce-inline-toolbar {
+    transform: scale(1.15); /* Slightly larger on tiny screens */
+  }
+  
+  /* Constraint EditorJS internal dropdowns from going off-screen */
+  .ce-popover, 
+  .ce-settings, 
+  .ce-toolbox {
+    max-width: calc(100vw - 20px) !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    position: fixed !important;
+    top: auto !important;
+    bottom: 20px !important; /* Move settings to bottom sheet style */
+    margin-top: 0 !important;
+    z-index: 2000 !important;
+  }
+  
+  .psr-rich-editor-container .ce-toolbar__actions {
+    left: -24px !important;
+  }
+}
+
+/* Ensure global EditorJS elements are also constrained */
+.ce-popover {
+  max-width: 95vw;
+}
+
+@media (max-width: 768px) {
+  .ce-popover {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    bottom: 20px !important;
+    top: auto !important;
+  }
+}
+
+/* ========================================
+   LOADING STATE - RESPONSIVE
+   ======================================== */
+.psr-rich-editor-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  background: #f8f9fa;
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  color: #6c757d;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 20px;
+}
+
+@media (max-width: 767px) {
+  .psr-rich-editor-loading {
+    min-height: 150px;
+    font-size: 13px;
+  }
+}
+
+.psr-loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid #4b2c85;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.psr-rich-editor-loading p {
+  margin: 0;
+  font-weight: 600;
+  color: #4a5568;
+  text-align: center;
+}
+
+/* ========================================
+   CUSTOM MEDIA TOOL - RESPONSIVE
+   ======================================== */
+.psr-rich-editor-container .psr-image-tool {
+  margin: 1em 0;
+}
+
+.psr-rich-editor-container .psr-media-container {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  width: 100%;
+}
+
+.psr-rich-editor-container .psr-media-container img,
+.psr-rich-editor-container .psr-media-container video {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: block;
+}
+
+@media (max-width: 767px) {
+  .psr-rich-editor-container .psr-media-container img,
+  .psr-rich-editor-container .psr-media-container video {
+    border-radius: 6px;
+  }
+}
+
+.psr-rich-editor-container .psr-media-caption {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #6c757d;
+  min-height: 20px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 767px) {
+  .psr-rich-editor-container .psr-media-caption {
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+}
+
+.psr-rich-editor-container .psr-media-caption:empty:before {
+  content: attr(placeholder);
+  color: #adb5bd;
+  font-style: italic;
+}
+
+.psr-rich-editor-container .psr-media-remove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(220, 53, 69, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+@media (max-width: 767px) {
+  .psr-rich-editor-container .psr-media-remove {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+    top: 6px;
+    right: 6px;
+  }
+}
+
+.psr-rich-editor-container .psr-media-remove:hover {
+  background: #dc3545;
+  transform: scale(1.1);
+}
+
+.psr-rich-editor-container .psr-media-remove:active {
+  transform: scale(0.95);
+}
+
+.psr-rich-editor-container .psr-media-placeholder {
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #f8f9fa;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 767px) {
+  .psr-rich-editor-container .psr-media-placeholder {
+    padding: 30px 15px;
+    border-radius: 6px;
+  }
+}
+
+.psr-rich-editor-container .psr-media-placeholder:hover {
+  border-color: #4b2c85;
+  background: #f0f0ff;
+}
+
+.psr-rich-editor-container .psr-media-placeholder:active {
+  transform: scale(0.98);
+}
+
+.psr-rich-editor-container .psr-media-placeholder-content {
+  color: #6c757d;
+}
+
+.psr-rich-editor-container .psr-media-placeholder-content i {
+  font-size: 32px;
+  margin-bottom: 12px;
+  display: block;
+  color: #adb5bd;
+}
+
+@media (max-width: 767px) {
+  .psr-rich-editor-container .psr-media-placeholder-content i {
+    font-size: 28px;
+    margin-bottom: 10px;
+  }
+}
+
+.psr-rich-editor-container .psr-media-placeholder-content p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+@media (max-width: 767px) {
+  .psr-rich-editor-container .psr-media-placeholder-content p {
+    font-size: 13px;
+  }
+}
+
+/* ========================================
+   TOUCH IMPROVEMENTS
+   ======================================== */
+@media (hover: none) and (pointer: coarse) {
+  /* Touch device specific styles */
+  .psr-rich-editor-container .ce-block {
+    padding: 4px 0 !important;
+  }
+  
+  .psr-rich-editor-container .ce-toolbar__button {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Larger tap targets */
+  .psr-rich-editor-container button,
+  .psr-rich-editor-container .ce-toolbar__button {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+}
+
+/* ========================================
+   LANDSCAPE ORIENTATION (Mobile)
+   ======================================== */
+@media (max-width: 767px) and (orientation: landscape) {
+  .psr-rich-editor-container {
+    min-height: 120px;
+  }
+  
+  .psr-rich-editor-container .codex-editor {
+    min-height: 100px;
+    padding: 10px;
+  }
+  
+  .psr-rich-editor-container .ce-toolbar__actions {
+    max-height: 120px;
+    padding: 8px 6px !important;
+  }
+}
+
+/* ========================================
+   PRINT STYLES
+   ======================================== */
+@media print {
+  .psr-rich-editor-container .ce-toolbar,
+  .psr-rich-editor-container .psr-media-remove {
+    display: none !important;
+  }
+  
+  .psr-rich-editor-container {
+    border: none;
+    box-shadow: none;
+  }
+  
+  .psr-rich-editor-container .ce-block__content {
+    max-width: 100% !important;
+  }
+}

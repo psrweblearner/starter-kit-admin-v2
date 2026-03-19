@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{!-- Meta Section --}}
+    <title>Admin Dashboard</title>
+    {{!-- Style Section --}}
+    <link
+        href="https://fonts.googleapis.com/css2?family=Convergence&family=Poppins:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" />
+    <link rel="stylesheet" href="/admin/css/common.css">
+    <link href="/admin/css/psr-theme.css" rel="stylesheet">
+    {{{_sections.style}}}
+    <script type="text/javascript">
+        (function (c, l, a, r, i, t, y) {
+            c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments) };
+            t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
+            y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
+        })(window, document, "clarity", "script", "vwl75xbfbr");
+    </script>
+</head>
+
+<body>
+    <header class="psr-navbar">
+        <div class="psr-container">
+            <!-- Brand -->
+            <div class="psr-navbar-brand">
+                <a href="/admin/dashbard">Rawat <span> Duniya</span></a>
+            </div>
+
+            <!-- Navbar Menu -->
+            <nav class="psr-navbar-menu">
+                {{#if (gt (length user.roles) 1)}}
+                <div class="psr-switch-role" onclick="toggleRoleDropdown(event)">
+                    <p><i class="fa-solid fa-shuffle"></i> {{#if user.role}}
+                        {{user.role.title}}
+                        {{else}}
+                        Switch Role
+                        {{/if}}</p>
+                    <div id="psrRoleDropdown" class="psr-sub-dropdown hidden">
+                        {{#each user.roles}}
+                        {{#if (eq this.status 1)}}
+                        <a href="javascript:void(0);" class="{{#if (eq this.id ../user.role.id)}}role-active{{/if}}"
+                            onclick="switchRole('{{this.id}}', '{{../user.id}}')">{{this.title}}</a>
+                        {{/if}}
+                        {{/each}}
+                    </div>
+                </div>
+                {{/if}}
+
+
+                <!-- Profile -->
+                <div class="psr-navbar-profile" onclick="toggleDropdown(event)">
+                    <p><i class="fa-solid fa-user"></i> {{user.firstName}} {{user.lastName}}</p>
+                    <div id="psrProfileDropdown" class="psr-dropdown hidden">
+                        <div class="psr-user-info">
+                            <strong>{{user.firstName}} {{user.lastName}}</strong><br>
+                            <small>{{user.role.title}}</small>
+                        </div>
+                        <hr>
+                        <a href="/admin/profile">👤 Profile</a>
+                        <a href="/logout">🚪 Logout</a>
+                    </div>
+                </div>
+                <li class="psr-nav-icons"><a class="psr-nav-link" href="/logout"><i
+                            class="fa-solid fa-power-off"></i></a></li>
+            </nav>
+        </div>
+    </header>
+    {{{body}}}
+    {{!-- Script Section --}}
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+    <script src="/helper.js"></script>
+    <script>
+        function toggleDropdown(event) {
+            event.stopPropagation();
+            const profile = document.getElementById("psrProfileDropdown");
+            const role = document.getElementById("psrRoleDropdown");
+
+            if (role) role.classList.add("hidden"); // ✅ only if exists
+            profile.classList.toggle("hidden");
+        }
+
+        function toggleRoleDropdown(event) {
+            console.log('toggleRoleDropdown called');
+            event.stopPropagation();
+            const profile = document.getElementById("psrProfileDropdown");
+            const role = document.getElementById("psrRoleDropdown");
+
+            if (profile) profile.classList.add("hidden");
+            if (role) role.classList.toggle("hidden");
+        }
+
+        // 🔹 Close dropdowns when clicking outside
+        document.addEventListener("click", function () {
+            const profile = document.getElementById("psrProfileDropdown");
+            const role = document.getElementById("psrRoleDropdown");
+
+            if (profile) profile.classList.add("hidden");
+            if (role) role.classList.add("hidden");
+        });
+
+
+
+        function switchRole(roleId, userId) {
+            roleId = Number(roleId);
+            userId = Number(userId);
+
+            fetchData(api('admin-auth/switch-role'), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: { roleId, userId }
+            }).then(response => {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    toastr.error(response.message || 'Failed to switch role');
+                }
+            }).catch(err => {
+                console.error('Error switching role:', err);
+                toastr.error('An error occurred while switching role');
+            });
+        }
+    </script>
+    <!-- WhatsApp Floating Button -->
+    <style>
+        .wa-float-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            background-color: #22c55e;
+            color: white;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 9999;
+        }
+        .wa-float-btn:hover {
+            background-color: #16a34a;
+            transform: scale(1.1);
+        }
+        .wa-ping-animation {
+            position: absolute;
+            display: inline-flex;
+            width: 100%;
+            height: 100%;
+            border-radius: 9999px;
+            background-color: #4ade80;
+            opacity: 0.75;
+            animation: wa-ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        @keyframes wa-ping {
+            75%, 100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+        .wa-svg-icon {
+            width: 32px;
+            height: 32px;
+            position: relative;
+            z-index: 10;
+        }
+    </style>
+    <a href="https://wa.me/919266535507?text=Hi%2C%20I%20want%20more%20details%20about%20your%20platform" target="_blank" class="wa-float-btn">
+        <span class="wa-ping-animation"></span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="wa-svg-icon" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564c.173.087.289.129.332.202.043.073.043.423-.101.827z" />
+        </svg>
+    </a>
+</body>
+
+</html>

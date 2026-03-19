@@ -1,0 +1,13 @@
+<form id="roleFrm" class="psr-form">
+    <div class="psr-form-group">
+    <label class="psr-form-label">Select Roles</label>
+    <select id="roleId" name="roleId" class="psr-form-input" multiple data-url="roles" data-root="data" data-value-field="id"
+            data-label-field="title" data-placeholder="Select roles..." data-search-placeholder="Search roles..." data-selected='{{pluck data.roles "id"}}'>
+    </select>
+    <input type="hidden" name="adminUserId" id="adminUserId" value="{{data.id}}">
+    </div>
+    <div id="roleAccessWrapper"></div>
+    <div class="psr-profile-actions">
+        <button type="submit" class="psr-btn psr-btn-primary" id="psr-assign-role">Assign Role</button>
+    </div>
+</form>

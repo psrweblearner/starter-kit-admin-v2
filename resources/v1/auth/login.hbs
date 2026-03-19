@@ -1,0 +1,114 @@
+<!-- resources/website/login.hbs -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="text/javascript">
+        (function (c, l, a, r, i, t, y) {
+            c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments) };
+            t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
+            y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
+        })(window, document, "clarity", "script", "vwl75xbfbr");
+    </script>
+</head>
+
+<body
+    class="bg-gray-900 font-sans antialiased text-gray-100 bg-gradient-to-br from-gray-900 to-black h-screen selection:bg-blue-500 selection:text-white">
+
+    <div class="min-h-screen flex items-center justify-center relative overflow-hidden">
+
+        <!-- Background Elements -->
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+            <div class="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[120px]"></div>
+            <div class="absolute top-[20%] right-[10%] w-[40%] h-[40%] bg-indigo-600/10 rounded-full blur-[100px]">
+            </div>
+        </div>
+
+        <div
+            class="bg-gray-800/60 backdrop-blur-xl shadow-2xl rounded-2xl w-full max-w-md p-8 border border-gray-700/50 relative z-10 transition-all duration-300 hover:shadow-blue-500/10 hover:border-gray-600">
+            <div class="flex justify-center mb-6">
+                <!-- Placeholder for logo if exists, or a nice icon -->
+                <div
+                    class="w-20 h-20 bg-gradient-to-tr from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
+                    </svg>
+                </div>
+            </div>
+
+            <h2 class="text-3xl font-extrabold text-center text-white mb-2 tracking-tight">Welcome Back</h2>
+            <p class="text-center text-gray-400 mb-8 text-sm">Sign in to access your dashboard</p>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="space-y-6">
+                <div class="space-y-1">
+                    <label for="username" class="block text-sm font-medium text-gray-300 ml-1">Email Address or
+                        Mobile</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                            </svg>
+                        </div>
+                        <input type="text" id="username" name="username" placeholder="Email or Mobile" value="demo@example.com"
+                            class="w-full pl-10 pr-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all duration-200 text-gray-100 placeholder-gray-500"
+                            required>
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between items-center ml-1">
+                        <label for="password" class="block text-sm font-medium text-gray-300">Password</label>
+                        <a href="/forget" class="text-xs text-blue-400 hover:text-blue-300 transition-colors">Forgot
+                            password?</a>
+                    </div>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                        </div>
+                        <input type="password" id="password" name="password" value="123456789" placeholder="••••••••"
+                            class="w-full pl-10 pr-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all duration-200 text-gray-100 placeholder-gray-500"
+                            required>
+                    </div>
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-600/20 hover:shadow-blue-600/40 transform hover:-translate-y-0.5 transition-all duration-200 focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-blue-500">
+                    Sign In
+                </button>
+            </form>
+
+            <p id="errorMsg"
+                class="mt-4 text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg p-3 text-sm text-center hidden animate-pulse">
+            </p>
+
+            <p class="mt-8 text-center text-sm text-gray-500">
+                Don't have an account? <a href="/contact"
+                    class="font-semibold text-blue-400 hover:text-blue-300 transition-colors">Contact Admin</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="helper.js"></script>
+    <script src="auth/login.js"></script>
+    <!-- WhatsApp Floating Button -->
+    <a href="https://wa.me/919266535507?text=Hi%2C%20I%20want%20more%20details%20about%20your%20platform" target="_blank"
+        class="fixed bottom-6 right-6 w-14 h-14 bg-green-500 text-white rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(34,197,94,0.5)] hover:bg-green-600 hover:scale-110 transition-all duration-300 z-50">
+        <span class="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping"></span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 relative z-10" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564c.173.087.289.129.332.202.043.073.043.423-.101.827z" />
+        </svg>
+    </a>
+</body>
+
+</html>

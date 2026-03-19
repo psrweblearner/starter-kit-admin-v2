@@ -1,0 +1,93 @@
+<div class="psr-card">
+    <div class="psr-card-header">
+        <h3 class="psr-card-title">Add New API Client</h3>
+    </div>
+    <div class="psr-card-body">
+        <form id="api-client-form" class="psr-form" autocomplete="off">
+            <div class="psr-grid psr-grid-col-2 gap-2">
+                <div class="psr-form-group">
+                    <label class="psr-form-label">Client Name</label>
+                    <input type="text" class="psr-form-input" id="name" name="name"
+                        placeholder="e.g. Mobile App, web-client">
+                </div>
+                <div class="psr-form-group">
+                    <label class="psr-form-label">IP / Domain</label>
+                    <input type="text" class="psr-form-input" id="domain" name="domain"
+                        placeholder="e.g. 192.168.1.1 or example.com">
+                </div>
+                <div class="psr-form-group">
+                    <label class="psr-form-label">Status</label>
+                    <select class="psr-form-input" id="status" name="status">
+                        <option value="1">Active</option>
+                        <option value="0">Inactive</option>
+                    </select>
+                </div>
+                <div class="psr-form-group" style="display: flex; flex-direction: column; justify-content: flex-end;">
+                    <div style="display: flex; align-items: center; gap: 10px; padding-bottom: 10px;">
+                        <label class="psr-form-label" style="margin-bottom: 0;">Allow Everyone (Skip Whitelist)</label>
+                        <label class="psr-switch">
+                            <input type="checkbox" id="allow_all" name="allow_all" value="1">
+                            <span class="psr-slider round"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="psr-profile-actions">
+                <button type="submit" class="psr-btn psr-btn-primary" id="psr-save">Create Client</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{#section 'script'}}
+<script>
+    $('#api-client-form').psrValidate({
+        rules: {
+            name: { required: true, minLength: 3 },
+            domain: { required: true, minLength: 3 }
+        },
+        messages: {
+            name: { required: 'Please enter client name', minLength: 'Minimum 3 characters required' },
+            domain: { required: 'Please enter IP or Domain', minLength: 'Minimum 3 characters required' }
+        },
+        onValid: function () {
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            $btn.prop('disabled', true);
+
+            // Collect data
+            const data = {
+                name: $('#name').val(),
+                domain: $('#domain').val(),
+                status: parseInt($('#status').val()),
+                allow_all: $('#allow_all').is(':checked')
+            };
+
+            $.ajax({
+                url: api(`api-client`),
+                method: 'POST',
+                data: JSON.stringify(data),
+                contentType: 'application/json',
+                success: function (res) {
+                    toastr.success('API Client created successfully!');
+                    setTimeout(() => {
+                        // Redirect to the list view
+                        const urlParts = window.location.pathname.split('/');
+                        urlParts.pop(); // remove 'create'
+                        window.location.href = urlParts.join('/');
+                    }, 1000);
+                },
+                error: function (err) {
+                    toastr.error('Error creating client: ' + (err.responseJSON?.message || err.statusText));
+                },
+                complete: function () {
+                    $btn.prop('disabled', false);
+                }
+            });
+
+            return false;
+        }
+    });
+</script>
+{{/section}}

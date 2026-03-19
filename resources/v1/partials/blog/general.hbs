@@ -1,0 +1,85 @@
+<form id="blogEditForm" class="psr-form" autocomplete="off">
+    <div class="psr-form-group">
+        <label class="psr-form-label">Feature Image</label>
+        <div class="psr-field-with-published">
+            <div class="feature-image-preview" id="feature-preview-container">
+                <div class="preview-thumb-wrapper rectangle">
+                    <img src="{{#if data.file_id}}{{data.file_id.file}}{{else}}https://getdrawings.com/free-icon/preview-icon-69.png{{/if}}"
+                        alt="" class="preview-media rectangle">
+                    <button type="button" class="remove-preview-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="add-new-file-box rectangle" accept="image/*" data-file-picker="true" data-max-files="1"
+                    data-trigger-id="feature-image" data-preview-style="rectangle" access="{{user.access}}"
+                    data-remaining="0" style="display: none;">
+                    <i class="fas fa-camera"></i>
+                </div>
+            </div>
+        </div>
+
+        <input type="hidden" id="feature-image" name="file_id" value="{{data.file_id.id}}">
+    </div>
+    <div class="psr-grid psr-grid-col-3 gap-2">
+        <div class="psr-form-group">
+            <label class="psr-form-label">Blog Title *</label>
+            <div class="psr-field-with-published">
+                <input type="text" class="psr-form-input" id="title" name="title" value="{{data.title}}">
+            </div>
+        </div>
+
+        <div class="psr-form-group">
+            <label class="psr-form-label">Slug *</label>
+            <div class="psr-field-with-published">
+                <input type="text" class="psr-form-input" id="slug" name="slug" value="{{data.slug}}">
+            </div>
+        </div>
+        <div class="psr-form-group">
+            <label class="psr-form-label">Author *</label>
+            <div class="psr-field-with-published">
+                <select class="psr-form-input" id="author" name="author" data-url="admin" data-root="data"
+                    data-label-field="firstName" data-image-field="profile.file" data-value-field="id"
+                    data-placeholder="Select Author" data-single-select="true" data-selected='{{ data.author }}'
+                    data-concat-fields="firstName,lastName" >
+                    <option selected disabled>Select Author</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="psr-grid psr-grid-col-2 gap-2">
+        <div class="psr-form-group">
+            <label class="psr-form-label">Categories *</label>
+            <div class="psr-field-with-published">
+                <select class="psr-form-input" id="categories" name="categories" multiple data-url="categories"
+                    data-root="data" data-value-field="id" data-label-field="name"
+                    data-selected='{{ pluck data.categories "id" }}' data-description-field="slug"
+                    data-placeholder="Select Categories">
+                </select>
+            </div>
+        </div>
+
+        <div class="psr-form-group">
+            <label class="psr-form-label">Tags *</label>
+            <div class="psr-field-with-published">
+                <select class="psr-form-input" id="tags" name="tags" multiple data-url="tags" data-root="data"
+                    data-value-field="id" data-label-field="name" data-selected='{{ pluck data.tags "id" }}'
+                    data-description-field="slug" data-placeholder="Select Tags">
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="psr-form-group">
+        <label class="psr-form-label">Tagline *</label>
+        <div class="psr-field-with-published">
+            <textarea class="psr-form-input psr-form-textarea" id="tagline" name="tagline" rows="3"
+                placeholder="Short description or tagline">{{data.tagline}}</textarea>
+        </div>
+    </div>
+
+    <div class="psr-form-actions">
+        <button type="submit" class="psr-btn psr-btn-primary">
+            <i class="fa-solid fa-save"></i> Update Blog
+        </button>
+    </div>
+</form>

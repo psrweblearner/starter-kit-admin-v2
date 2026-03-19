@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Role</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body
+    class="bg-gray-900 font-sans antialiased text-gray-100 bg-gradient-to-br from-gray-900 to-black h-screen selection:bg-blue-500 selection:text-white">
+
+    <div class="min-h-screen flex items-center justify-center relative overflow-hidden p-4">
+
+        <!-- Background Elements -->
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+            <div class="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[120px]"></div>
+            <div class="absolute top-[20%] right-[10%] w-[40%] h-[40%] bg-indigo-600/10 rounded-full blur-[100px]">
+            </div>
+        </div>
+
+        <div
+            class="bg-gray-800/60 backdrop-blur-xl shadow-2xl rounded-2xl w-full max-w-2xl p-8 border border-gray-700/50 relative z-10 transition-all duration-300 hover:shadow-blue-500/10 hover:border-gray-600">
+
+            <div class="flex justify-center mb-6">
+                <div
+                    class="w-16 h-16 bg-gradient-to-tr from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                </div>
+            </div>
+
+            <h1 class="text-3xl font-extrabold text-center text-white mb-2 tracking-tight">Select Your Role</h1>
+            <p class="text-center text-gray-400 mb-8 text-sm">Please choose a role to continue</p>
+
+            <div id="roleContainer" class="flex flex-wrap justify-center gap-4 w-full"></div>
+
+            <p id="msg"
+                class="mt-6 text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg p-3 text-sm text-center hidden animate-pulse">
+            </p>
+        </div>
+    </div>
+
+    <script src="/helper.js"></script>
+    <script>
+        // fetchData is now available globally via window.fetchData
+
+        const container = document.getElementById('roleContainer');
+        const msg = document.getElementById('msg');
+
+        // Retrieve stored data: { multipleRoles: true, user: {id: 1}, roles: [...] }
+        const sessionData = JSON.parse(sessionStorage.getItem('multiRoleUser'));
+
+        if (!sessionData || !sessionData.user) {
+            msg.textContent = 'No user data found. Please login again.';
+            msg.classList.remove('hidden');
+            setTimeout(() => window.location.href = '/', 2000);
+        } else {
+            const roles = sessionData.roles || [];
+
+            roles.forEach(role => {
+                const card = document.createElement('div');
+                // Role Card Styling
+                card.className = 'bg-gray-700/50 hover:bg-gray-700 border border-gray-600 hover:border-blue-500/50 p-6 rounded-xl cursor-pointer transition-all duration-200 flex-1 min-w-[140px] text-center shadow-lg hover:shadow-blue-500/20 hover:-translate-y-1 group';
+
+                card.innerHTML = `
+                    <div class="text-lg font-semibold text-gray-200 group-hover:text-white transition-colors">${role.title}</div>
+                    <div class="text-xs text-gray-400 mt-1 group-hover:text-blue-300">Click to enter</div>
+                `;
+
+                card.onclick = async () => {
+                    // Visual feedback
+                    const originalContent = card.innerHTML;
+                    card.style.opacity = '0.7';
+                    card.innerHTML = `<div class="animate-pulse text-blue-400 font-semibold">Selecting...</div>`;
+
+                    try {
+                        const payload = {
+                            userId: sessionData.user.id,
+                            roleId: role.id
+                        };
+
+                        // Using Central API Helper
+                        const res = await fetchData('admin-auth/switch-role', {
+                            method: 'POST',
+                            credentials: 'include', // Important for cookies!
+                            body: payload
+                        });
+
+                        // Note: fetchData returns parsed JSON (data)
+                        if (!res.success) {
+                            throw new Error(res.message || 'Role switch failed');
+                        }
+
+                        // Success handling (Redirect)
+                        if (res.data?.token) {
+                            // Bridge call removed - Cookies are handled directly by the API via Nginx
+                            window.location.href = '/admin/dashboard';
+                        } else {
+                            // Fallback
+                            window.location.href = '/admin/dashboard';
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        msg.textContent = err.message || 'An error occurred. Please try again.';
+                        msg.classList.remove('hidden');
+                        card.style.opacity = '1';
+                        card.innerHTML = originalContent;
+                    }
+                };
+                container.appendChild(card);
+            });
+        }
+    </script>
+    <!-- WhatsApp Floating Button -->
+    <a href="https://wa.me/919266535507?text=Hi%2C%20I%20want%20more%20details%20about%20your%20platform" target="_blank"
+        class="fixed bottom-6 right-6 w-14 h-14 bg-green-500 text-white rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(34,197,94,0.5)] hover:bg-green-600 hover:scale-110 transition-all duration-300 z-50">
+        <span class="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping"></span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 relative z-10" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564c.173.087.289.129.332.202.043.073.043.423-.101.827z" />
+        </svg>
+    </a>
+</body>
+
+</html>

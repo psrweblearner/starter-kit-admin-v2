@@ -1,0 +1,25 @@
+<div class="psr-grid psr-grid-col-2 gap-2 mt-5">
+    <!-- Left Column: Menu -->
+    <div class="psr-card">
+        <div class="psr-card-header">
+            <h3 class="psr-card-title"><i class="fa-solid fa-layer-group mr-1"></i> My Modules</h3>
+        </div>
+        <div class="psr-card-body">
+            <div class="psr-menu-cards psr-menu-cards-3">
+                {{#each user.groups}}
+                <a href="/admin/{{this.slug}}" class="psr-menu-card psr-menu-card-primary">
+                    <div class="psr-menu-card-icon">
+                        <i class="{{this.icon}}"></i>
+                    </div>
+                    <div class="psr-menu-card-content">{{this.title}}</div>
+                </a>
+                {{/each}}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Common Information -->
+    <div class="psr-widgets-column">
+        {{>common-widgets}}
+    </div>
+</div>

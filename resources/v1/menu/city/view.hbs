@@ -1,0 +1,120 @@
+<div class="psr-card psr-card-compact">
+  {{#if (or (canAccess 'create') (canAccess 'download'))}}
+  <div class="psr-card-header">
+    <h5 class="psr-card-title">
+      {{#if (canAccess 'create')}}
+      <button class="psr-btn psr-btn-primary psr-btn-icon" title="Create New User"
+        onclick="window.location.href='/admin/{{category}}/{{menu}}/create'">
+        <i class="fa-solid fa-plus"></i>
+      </button>
+      {{/if}}
+
+      {{#if (canAccess 'download')}}
+      <button class="psr-btn psr-btn-primary psr-btn-icon js-download-data" title="Download Data"
+        data-owner-field="createdBy" data-owner-value="{{user.id}}" data-api="city"
+        data-api-option='{"columns":"*"}' data-filter-cols='["status"]'>
+        <i class="fa-solid fa-download"></i>
+      </button>
+      {{/if}}
+    </h5>
+  </div>
+  {{/if}}
+
+  <div class="psr-card-body">
+    <table id="properties-table" class="psr-table" data-api="city"  data-filter="true"
+      data-filter-fields="name,slug,status" data-actions="true" data-default-field="name,slug,status"
+      data-page-size="5" data-sticky-header="true" data-toggle-field="status,is_prominent"
+      data-access="{{user.access}}"
+      {{!-- data-card-view="true" --}}
+      >
+    </table>
+  </div>
+</div>
+
+{{#section 'script'}}
+<script>
+  const category = `{{category}}`;
+  const menu = `{{menu}}`;
+  PSRDataTable.setHandlers({
+    edit: function (id, rowData, tableInstance) {
+      window.location.href = `/admin/${category}/${menu}/${id}`
+    },
+
+    delete: async function (id, rowData, tableInstance) {
+      const result = await Swal.fire({
+        title: 'Are you sure?',
+        text: "You won't be able to revert this!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it!'
+      });
+
+      if (result.isConfirmed) {
+        try {
+          const response = await fetch(api(`city/${id}`), {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          if (response.ok) {
+            Swal.fire(
+              'Deleted!',
+              'feature has been deleted.',
+              'success'
+            );
+            tableInstance.reloadData();
+          } else {
+            const errorData = await response.json();
+            Swal.fire(
+              'Failed!',
+              `Failed to delete feature: ${errorData.message || response.statusText}`,
+              'error'
+            );
+          }
+        } catch (error) {
+          Swal.fire(
+            'Error!',
+            `Error deleting feature: ${error.message}`,
+            'error'
+          );
+        }
+      }
+    },
+
+    toggle: async function (id, field, newValue, rowData, tableInstance) {
+      try {
+        const response = await fetch(api(`city/${id}/status`), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [field]: newValue })
+        });
+
+        if (response.ok) {
+          Swal.fire(
+            'Updated!',
+            `${field} updated successfully.`,
+            'success'
+          );
+          tableInstance.reloadData();
+        } else {
+          const errorData = await response.json();
+          Swal.fire(
+            'Failed!',
+            `Failed to update ${field}: ${errorData.message || response.statusText}`,
+            'error'
+          );
+        }
+      } catch (error) {
+        Swal.fire(
+          'Error!',
+          `Error updating ${field}: ${error.message}`,
+          'error'
+        );
+      }
+
+    }
+  });
+</script>
+{{/section}}
