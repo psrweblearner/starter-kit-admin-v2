@@ -1,0 +1,241 @@
+<div class="psr-card">
+    <div class="psr-card-header">
+        <h3 class="psr-card-title">Add New Email Template</h3>
+    </div>
+    <div class="psr-card-body">
+        <div class="psr-tabs" data-psr-tabs>
+            <div class="psr-tablist" role="tablist" aria-label="Sample Tabs">
+                <button role="tab" class="psr-tab active" aria-selected="true" aria-controls="tab-panel-1"
+                    id="tab-1">Home</button>
+            </div>
+            <div tabindex="0" role="tabpanel" class="psr-tab-panel active" id="tab-panel-1" aria-labelledby="tab-1">
+                <div class="psr-grid psr-grid-8-2 gap-2">
+                    <form id="psr-email-template-form" class="psr-form" autocomplete="off">
+                        <div class="psr-grid psr-grid-col-3 gap-2">
+                            <div class="psr-form-group">
+                                <label class="psr-form-label">Select Models</label>
+                                <select id="module" name="module" class="psr-form-input" data-url="models"
+                                    data-single-select="true" data-root="data" data-value-field="name"
+                                    data-label-field="name" data-placeholder="Select models..." data-selected=""
+                                    data-search-placeholder="Search models...">
+                                </select>
+                            </div>
+                            <!-- Model Fields (reference only) -->
+                            <div class="psr-form-group">
+                                <label class="psr-form-label">Operation</label>
+                                <select name="operation" id="operation" class="psr-form-input">
+                                    <option selected disabled>Select Operation</option>
+                                    <option value="create">Create</option>
+                                    <option value="update">Update</option>
+                                    <option value="delete">Delete</option>
+                                </select>
+                            </div>
+                            <div class="psr-form-group">
+                                <label class="psr-form-label">Email Operation Mode</label>
+                                <select name="mail" id="mail" class="psr-form-input">
+                                    <option selected disabled>Select Mode</option>
+                                    <option value="1">Send Emails</option>
+                                    <option value="0">Log Only (Don’t Send)</option>
+                                </select>
+                            </div>
+                            <div class="psr-form-group">
+                                <label for="attchment" class="psr-form-lebel">Attchment</label>
+                                <input type="text" name="attchment" id="attchment" class="psr-form-input" placeholder="Attchment">
+                            </div>
+                            <div class="psr-form-group">
+                                <label class="psr-form-label">Attchment Target</label>
+                                <select name="attchmentTo" id="attchmentTo" class="psr-form-input">
+                                    <option value="All" selected>All</option>
+                                    <option value="admin">Admin Only</option>
+                                    <option value="user">User Only</option>
+                                </select>
+                            </div>
+                            <div class="psr-form-group">
+                                <label class="psr-form-label">Send Mail To</label>
+                                <select name="mailTo" id="mailTo" class="psr-form-input">
+                                    <option value="All" selected>All</option>
+                                    <option value="admin">Admin Only</option>
+                                    <option value="user">User Only</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="psr-grid psr-grid-col-2 gap-2">
+                            <div class="psr-form-group">
+                                <label class="psr-form-label">Mail Field</label>
+                                <textarea name="mailField" id="mailField" class="psr-form-input" cols="30"
+                                    rows="4"></textarea>
+                                 <small class="psr-field-error">
+                                    {
+                                        "user":{field:'email'},
+                                        "agent":{field:'agentid',subject:"New Pass generated",body:"example message"},
+
+                                    }
+                                </small>
+                                
+                            </div>
+                            <div class="psr-form-group">
+                                <label class="psr-form-label">Description</label>
+                                <textarea name="description" id="description" class="psr-form-input" cols="30"
+                                    rows="4"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="psr-grid psr-grid-col-2 gap-2">
+                            
+                            
+                                <div class="psr-form-group">
+                                <label class="psr-form-label">User Subject</label>
+                                <input type="text" name="userSubject" id="userSubject" class="psr-form-input" placeholder="Subject">
+                            </div>
+                             <div class="psr-form-group">
+                                <label class="psr-form-label">Admin Subject</label>
+                                <input type="text" name="adminSubject" id="adminSubject" class="psr-form-input" placeholder="Subject">
+                            </div>
+                            <div class="psr-form-group">
+                                <label class="psr-form-label">User Message</label>
+                                <textarea name="userBody" id="userBody" class="psr-form-input" cols="30"
+                                    rows="4" data-summernote></textarea>
+                            </div>
+                            
+                            <div class="psr-form-group">
+                                <label class="psr-form-label">Admin Message</label>
+                                <textarea name="adminBody" id="adminBody" class="psr-form-input" cols="30"
+                                    rows="4" data-summernote></textarea>
+                            </div>
+                            
+                        </div>
+
+                        <div class="psr-profile-actions">
+                            <button type="submit" class="psr-btn psr-btn-primary" id="psr-save">Create</button>
+                        </div>
+                    </form>
+                    <div class="psr-form-group" id="model-fields-container" style="display:none;">
+                        <label class="psr-form-label">Model Fields (reference)</label>
+                        <div id="model-fields-list"
+                            style="display:flex; flex-direction:column; gap:6px; padding:10px; border:1px solid #e2e8f0; border-radius:8px; background:#f8fafc;">
+                            <!-- <p>fieldName</p> items will be injected here -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{{#section 'script'}}
+<script>
+     // Initialize models multiselect with onChange handler
+    $('#module').PSRMultiselect({
+        onChange: function (selectedValues) {
+        const selectedModel = selectedValues && selectedValues.length > 0 ? selectedValues[0] : null;
+        const $fieldsContainer = $('#model-fields-container');
+        const $fieldsList = $('#model-fields-list');
+
+        if (selectedModel) {
+            $fieldsContainer && $fieldsContainer.show();
+            $fieldsList && $fieldsList.html('<div style="padding: 12px; color: #64748b;">Loading fields...</div>');
+
+            $.ajax({ url: api(`models/${selectedModel}/fields`), method: 'GET' })
+                .done(function (res) {
+                    // Render fields as simple <p> items for reference
+                    try {
+                        const fields = (res && (res.fields || res.data || [])) || [];
+                        const $fieldsContainer = $('#model-fields-container');
+                        const $fieldsList = $('#model-fields-list');
+                        if (fields.length) {
+                            const html = fields.map(function (f) {
+                                return '<p style="margin:0; padding:6px 8px; background:#fff; border:1px dashed #cbd5e1; border-radius:6px; color:#334155; font-size:13px;">' + f + '</p>';
+                            }).join('');
+                            $fieldsList.html(html);
+                            $fieldsContainer.show();
+                        } else {
+                            $fieldsList.html('<p style="margin:0; color:#94a3b8; font-size:13px;">No fields found for this model.</p>');
+                            $fieldsContainer.show();
+                        }
+                    } catch (e) {
+                        console.warn('Failed to render model fields', e);
+                    }
+                })
+                .fail(function (xhr, status, error) { console.error('Error fetching model fields:', error); });
+        } else {
+            $fieldsContainer && $fieldsContainer.hide();
+            $fieldsList && $fieldsList.html('');
+            // clear display column when no model
+            $('#displayColumn').val('');
+            $('#displayColumn').next('.psr-multiselect').remove();
+        }
+    }
+});
+
+
+//summerNote setup with limited toolbar
+$.psrSummernote('[data-summernote]', {
+    placeholder: 'Type here....',
+    toolbar: [
+        ['style', ['bold', 'italic', 'underline']],
+        ['file', ['filePicker']],
+        ['list', ['ul', 'ol', 'undo', 'redo']],
+        ['font', ['fullscreen', 'codeview']]
+    ]
+});
+
+$('#psr-email-template-form').psrValidate({
+    rules: {
+        module: { required: true, minLength: 2 },
+        operation: { required: true, minLength: 2 },
+        attchment:{required:false},
+        mail: { required: true },
+        userBody: { richRequired:true, richMinWords: 10 },
+        adminBody: { richRequired:true, richMinWords:10 },
+        userSubject: { required: true },
+        adminSubject: { required: true },
+        description: { required: true },
+    },
+    messages: {
+        module: { required: 'Please select module', minLength: 'Module should be more then 2 characters' },
+        operation: { required: 'Please select operation', minLength: 'Operation should be more then 2 characters' },
+        mail: { required: 'Please select mail Mode' },
+        userBody: { richRequired: 'User Body cannot be empty', richMinWords: 'Minmum 10 words' },
+        adminBody: { richRequired: 'Admin Body cannot be empty', richMinWords: 'Minmum 10 words' },
+        userSubject: { required: 'Please enter subject' },
+        adminSubject: { required: 'Please enter subject' },
+        description: { required: 'Please enter description' },
+    },
+    beforeSubmit: function () {
+        var $form = $(this);
+        var $btn = $form.find('button[type=submit]');
+        $btn.prop('disabled', true);
+        if (!$btn.find('.psr-spinner').length) {
+            $btn.prepend('<span class="psr-spinner"></span> ');
+        }
+    },
+    onValid: function () {
+        var $form = $(this);
+        var $btn = $form.find('button[type=submit]');
+        $.ajax({
+            url: api(`email-template`),   // change this
+            method: 'POST',
+            data: $form.serialize(),
+            success: function (res) {
+                toastr.success('Form submitted successfully!');
+            },
+            error: function (err) {
+                toastr.error('An error occurred while submiting.' + err.message);
+            },
+            complete: function () {
+                setTimeout(function() {location.reload();}, 1000);
+            }
+        });
+        return false;
+    },
+    onInvalid: function () {
+            toastr.error('Please correct the errors in the form.');
+            var $form = $(this);
+            var $btn = $form.find('button[type=submit]');
+            $btn.prop('disabled', false);
+            $btn.find('.psr-spinner').remove();
+        }
+});
+
+</script>
+{{/section}}
