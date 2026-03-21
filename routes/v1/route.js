@@ -29,6 +29,7 @@ router.get('/logout', (req, res) => {
     res.clearCookie('admin_auth_expiry', { path: '/' });
     res.clearCookie('admin_auth_server_time', { path: '/' });
     res.clearCookie('admin_refresh_token', { path: '/' });
+    res.clearCookie('admin_session_expiry', { path: '/' });
     res.redirect('/');
 });
 router.get('/favicon.ico', (req, res) => res.status(204).end());
