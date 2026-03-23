@@ -40,4 +40,7 @@ module.exports = {
     amenities: {
         edit: [{ name: '', url: (id) => `${API_URLS.AMENITIES_SLUG(id)}` }]
     },
+    emailTemplate: {
+        edit: [{ name: '', url: (id) => `${API_URLS.EMAIL_TEMPLATE_SLUG(id)}` }]
+    },
 };

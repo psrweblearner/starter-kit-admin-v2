@@ -22,7 +22,7 @@
 
   <div class="psr-card-body">
     <table id="properties-table" class="psr-table" data-api="email-template"  data-filter="true"
-      data-filter-fields="userSubject,operation,status" data-actions="true" data-default-field="userSubject,operation,status"
+      data-filter-fields="module,operation,triggerOn,status" data-actions="true" data-default-field="module,operation,triggerOn,status"
       data-page-size="5" data-sticky-header="true" data-toggle-field="status"
       data-access="{{user.access}}"
       {{!-- data-card-view="true" --}}
@@ -53,7 +53,7 @@
 
       if (result.isConfirmed) {
         try {
-          const response = await fetch(api(`developer/${id}`), {
+          const response = await fetch(api(`email-template/${id}`), {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' }
           });
@@ -61,7 +61,7 @@
           if (response.ok) {
             Swal.fire(
               'Deleted!',
-              'developer has been deleted.',
+              'Email template has been deleted.',
               'success'
             );
             tableInstance.reloadData();
@@ -69,14 +69,14 @@
             const errorData = await response.json();
             Swal.fire(
               'Failed!',
-              `Failed to delete developer: ${errorData.message || response.statusText}`,
+              `Failed to delete email template: ${errorData.message || response.statusText}`,
               'error'
             );
           }
         } catch (error) {
           Swal.fire(
             'Error!',
-            `Error deleting developer: ${error.message}`,
+            `Error deleting email template: ${error.message}`,
             'error'
           );
         }
@@ -85,7 +85,7 @@
 
     toggle: async function (id, field, newValue, rowData, tableInstance) {
       try {
-        const response = await fetch(api(`developer/${id}/status`), {
+        const response = await fetch(api(`email-template/${id}/status`), {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ [field]: newValue })
