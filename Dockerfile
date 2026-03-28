@@ -9,6 +9,9 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
+RUN apk add --no-cache dumb-init \
+  && npm install -g pm2
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
@@ -16,4 +19,7 @@ COPY . .
 RUN test -f /app/config/public.pem
 
 EXPOSE 4000
-CMD ["npm", "start"]
+
+# pm2-runtime keeps Node in the foreground (correct for Docker + --restart unless-stopped).
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["pm2-runtime", "start", "index.js", "--name", "admin"]
