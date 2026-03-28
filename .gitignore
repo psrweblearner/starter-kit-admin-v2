@@ -5,5 +5,12 @@
 /public/uploads/*
 # But do not ignore the folder itself
 !/public/uploads/.gitkeep
-/.env
+
+# secrets and local config (match api repo pattern)
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+!config/public.pem
 #/config/db.js

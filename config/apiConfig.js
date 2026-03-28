@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:5000/v1' : 'https://api.aeonianit.in/v1';
+const API_BASE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:5000/v1' : 'https://api.rdigital.online/v1';
 
 const API_URLS = {
     ADMIN_SLUG: (slug) => `${API_BASE_URL}/admin/${slug}`,
