@@ -1,0 +1,252 @@
+<div class="psr-card">
+    <div class="psr-card-header">
+        <h3 class="psr-card-title">Edit Mail Rule Template</h3>
+    </div>
+    <div class="psr-card-body">
+        <div class="mail-rule-layout" style="display:grid; grid-template-columns:minmax(0, 2fr) minmax(320px, 1fr); gap:16px; align-items:start;">
+        <form id="psr-email-template-form" class="psr-form" autocomplete="off">
+            <div class="psr-grid psr-grid-col-3 gap-2">
+                <div class="psr-form-group">
+                    <label class="psr-form-label">Rule Name</label>
+                    <input type="text" class="psr-form-input" id="description" name="description" value="{{data.description}}">
+                </div>
+                <div class="psr-form-group">
+                    <label class="psr-form-label">Email Mode</label>
+                    <select name="mail" id="mail" class="psr-form-input">
+                        <option value="1" {{#if (eq data.mail "1")}}selected{{/if}}>Send mail</option>
+                        <option value="0" {{#if (eq data.mail "0")}}selected{{/if}}>Log only</option>
+                    </select>
+                </div>
+                <div class="psr-form-group">
+                    <label class="psr-form-label">Model</label>
+                    <select id="module" name="module" class="psr-form-input" data-url="models" data-single-select="true" data-root="data" data-value-field="name" data-label-field="name" data-placeholder="Select model..." data-selected="{{data.module}}" data-search-placeholder="Search model..."></select>
+                </div>
+                <div class="psr-form-group">
+                    <label class="psr-form-label">Operation</label>
+                    <select name="operation" id="operation" class="psr-form-input">
+                        <option value="any" {{#unless data.operation}}selected{{/unless}}>Any operation</option>
+                        <option value="create" {{#if (eq data.operation "create")}}selected{{/if}}>Create</option>
+                        <option value="update" {{#if (eq data.operation "update")}}selected{{/if}}>Update</option>
+                        <option value="delete" {{#if (eq data.operation "delete")}}selected{{/if}}>Delete</option>
+                    </select>
+                </div>
+                <div class="psr-form-group">
+                    <label class="psr-form-label">Trigger Rule</label>
+                    <select name="triggerOn" id="triggerOn" class="psr-form-input">
+                        <option value="always" {{#if (eq data.triggerOn "always")}}selected{{/if}}>Always</option>
+                        <option value="status_change" {{#if (eq data.triggerOn "status_change")}}selected{{/if}}>Only status change</option>
+                        <option value="field_change" {{#if (eq data.triggerOn "field_change")}}selected{{/if}}>Only selected field changes</option>
+                        <option value="custom_condition" {{#if (eq data.triggerOn "custom_condition")}}selected{{/if}}>Custom condition (JSON)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="field-change-box" class="psr-form-group" style="display:none;">
+                <label class="psr-form-label">Watched Fields (comma separated)</label>
+                <input type="text" class="psr-form-input" id="watchedFieldsInput" value="{{jsonStringify data.watchedFields}}">
+            </div>
+
+            <div id="custom-condition-box" class="psr-form-group" style="display:none;">
+                <label class="psr-form-label">Condition Rules (JSON)</label>
+                <textarea id="conditionRulesInput" class="psr-form-input" rows="4">{{jsonStringify data.conditionRules}}</textarea>
+            </div>
+            
+            <div class="psr-form-group" id="placeholder-picker-box-mobile" style="display:none;"></div>
+
+            <div class="psr-grid psr-grid-col-2 gap-2">
+                <div class="psr-form-group">
+                    <label class="psr-form-label">User Subject</label>
+                    <input type="text" name="userSubject" id="userSubject" class="psr-form-input" value="{{data.userSubject}}">
+                </div>
+                <div class="psr-form-group">
+                    <label class="psr-form-label">Admin Subject</label>
+                    <input type="text" name="adminSubject" id="adminSubject" class="psr-form-input" value="{{data.adminSubject}}">
+                </div>
+                <div class="psr-form-group">
+                    <label class="psr-form-label">User Message</label>
+                    <textarea name="userBody" id="userBody" class="psr-form-input" rows="4" data-summernote>{{{data.userBody}}}</textarea>
+                </div>
+                <div class="psr-form-group">
+                    <label class="psr-form-label">Admin Message</label>
+                    <textarea name="adminBody" id="adminBody" class="psr-form-input" rows="4" data-summernote>{{{data.adminBody}}}</textarea>
+                </div>
+            </div>
+
+            <details style="margin-top: 10px;" {{#if (or data.attchment data.mailField)}}open{{/if}}>
+                <summary>Advanced options (optional)</summary>
+                <div class="psr-grid psr-grid-col-3 gap-2" style="margin-top: 12px;">
+                    <div class="psr-form-group">
+                        <label class="psr-form-label">Mail To</label>
+                        <select name="mailTo" id="mailTo" class="psr-form-input">
+                            <option value="all" {{#if (eq data.mailTo "all")}}selected{{/if}}>All</option>
+                            <option value="admin" {{#if (eq data.mailTo "admin")}}selected{{/if}}>Admin only</option>
+                            <option value="user" {{#if (eq data.mailTo "user")}}selected{{/if}}>User only</option>
+                        </select>
+                    </div>
+                    <div class="psr-form-group">
+                        <label class="psr-form-label">Attachment Field</label>
+                        <input type="text" name="attchment" id="attchment" class="psr-form-input" value="{{data.attchment}}">
+                    </div>
+                    <div class="psr-form-group">
+                        <label class="psr-form-label">Attachment Target</label>
+                        <select name="attchmentTo" id="attchmentTo" class="psr-form-input">
+                            <option value="all" {{#if (eq data.attchmentTo "all")}}selected{{/if}}>All</option>
+                            <option value="admin" {{#if (eq data.attchmentTo "admin")}}selected{{/if}}>Admin only</option>
+                            <option value="user" {{#if (eq data.attchmentTo "user")}}selected{{/if}}>User only</option>
+                        </select>
+                    </div>
+                    <div class="psr-form-group">
+                        <label class="psr-form-label">Custom Recipients JSON</label>
+                        <textarea name="mailField" id="mailField" class="psr-form-input" rows="4">{{jsonStringify data.mailField}}</textarea>
+                    </div>
+                </div>
+            </details>
+
+            <div class="psr-profile-actions">
+                <button type="submit" class="psr-btn psr-btn-primary" id="psr-save">Update</button>
+            </div>
+        </form>
+        <aside class="psr-form-group" id="placeholder-picker-box" style="display:none; position:sticky; top:90px; border:1px solid #e2e8f0; border-radius:10px; padding:12px; background:#f8fafc;">
+            <label class="psr-form-label">Model Field Placeholders</label>
+            <small style="display:block; color:#64748b; margin-bottom:8px;">Simple direct fields for copy/paste in user/admin body or subject.</small>
+            <div class="psr-form-group">
+                <label class="psr-form-label">Model fields</label>
+                <textarea id="placeholder-field-list" class="psr-form-input" rows="14" readonly></textarea>
+            </div>
+        </aside>
+        </div>
+    </div>
+</div>
+
+{{#section 'script'}}
+<script>
+const $tokenBox = $('#placeholder-picker-box');
+const $fieldList = $('#placeholder-field-list');
+const $layout = $('.mail-rule-layout');
+
+const adjustMailRuleLayout = function () {
+    if (window.innerWidth <= 1024) {
+        $layout.css('grid-template-columns', '1fr');
+        $tokenBox.css({ position: 'static', top: 'auto' });
+    } else {
+        $layout.css('grid-template-columns', 'minmax(0, 2fr) minmax(320px, 1fr)');
+        $tokenBox.css({ position: 'sticky', top: '90px' });
+    }
+};
+adjustMailRuleLayout();
+$(window).on('resize', adjustMailRuleLayout);
+
+const renderModelFieldTokens = function (fields) {
+    if (!Array.isArray(fields) || !fields.length) {
+        $tokenBox.hide();
+        $fieldList.val('');
+        return;
+    }
+    $fieldList.val(fields.join('\n'));
+    $tokenBox.show();
+};
+
+const loadModelFields = function (modelName) {
+    if (!modelName || modelName === '*') {
+        renderModelFieldTokens([]);
+        return;
+    }
+    $.ajax({ url: api('models/' + modelName + '/fields'), method: 'GET' })
+        .done(function (res) {
+            const fields = res?.fields || res?.data || [];
+            renderModelFieldTokens(fields);
+        })
+        .fail(function () { renderModelFieldTokens([]); });
+};
+
+$('#module').PSRMultiselect({
+    onChange: function (selectedValues) {
+        const selectedModel = selectedValues && selectedValues[0] ? selectedValues[0] : $('#module').val();
+        loadModelFields(selectedModel);
+    }
+});
+setTimeout(function () {
+    const $module = $('#module');
+    if (!$module.find('option[value="*"]').length) {
+        $module.prepend('<option value="*">All Models (Auto Project-wide)</option>');
+    }
+}, 300);
+
+setTimeout(function () {
+    const initialModel = $('#module').val();
+    loadModelFields(initialModel);
+}, 600);
+$.psrSummernote('[data-summernote]');
+
+const normalizeJsonInput = function (value) {
+    if (!value) return '';
+    const raw = String(value).trim();
+    if (!raw) return '';
+    if (raw.startsWith('[') || raw.startsWith('{')) return raw;
+    return raw.replace(/^\[|\]$/g, '');
+};
+
+const toggleConditionFields = function () {
+    const triggerOn = $('#triggerOn').val();
+    $('#field-change-box').toggle(triggerOn === 'field_change');
+    $('#custom-condition-box').toggle(triggerOn === 'custom_condition');
+};
+$('#triggerOn').on('change', toggleConditionFields);
+
+const watchedRaw = normalizeJsonInput($('#watchedFieldsInput').val());
+if (watchedRaw) {
+    try {
+        const parsed = JSON.parse(watchedRaw.startsWith('[') ? watchedRaw : `[${watchedRaw}]`);
+        $('#watchedFieldsInput').val(Array.isArray(parsed) ? parsed.join(',') : '');
+    } catch (e) {}
+}
+toggleConditionFields();
+
+const safeJson = function (value, fallback) {
+    if (!value || !String(value).trim()) return fallback;
+    try { return JSON.parse(value); } catch (e) { return fallback; }
+};
+
+$('#psr-email-template-form').psrValidate({
+    rules: {
+        module: { required: true },
+        operation: { required: true },
+        userBody: { richRequired: true, richMinWords: 5 },
+        userSubject: { required: true },
+        description: { required: true },
+    },
+    onValid: async function () {
+        const watchedFields = ($('#watchedFieldsInput').val() || '')
+            .split(',')
+            .map(function (item) { return item.trim(); })
+            .filter(Boolean);
+
+        const payload = {
+            module: $('#module').val(),
+            operation: $('#operation').val(),
+            userBody: $('#userBody').val(),
+            adminBody: $('#adminBody').val(),
+            userSubject: $('#userSubject').val(),
+            adminSubject: $('#adminSubject').val(),
+            description: $('#description').val(),
+            mail: $('#mail').val(),
+            attchment: $('#attchment').val(),
+            attchmentTo: $('#attchmentTo').val(),
+            mailTo: $('#mailTo').val(),
+            mailField: safeJson($('#mailField').val(), null),
+            triggerOn: $('#triggerOn').val(),
+            watchedFields: watchedFields.length ? watchedFields : null,
+            conditionRules: safeJson($('#conditionRulesInput').val(), null)
+        };
+
+        const result = await fetchData('email-template/{{data.id}}', { method: 'PUT', body: payload });
+        if (result && !result.authFailed && (result.data || result.success !== false)) {
+            toastr.success('Mail rule updated successfully!');
+        } else {
+            toastr.error(result?.message || 'Unable to update mail rule.');
+        }
+        return false;
+    }
+});
+</script>
+{{/section}}

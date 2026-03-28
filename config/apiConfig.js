@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:5000/v1' : 'https://api.aeonianit.in/v1';
+const API_BASE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:5000/v1' : 'https://api.rdigital.online/v1';
 
 const API_URLS = {
     ADMIN_SLUG: (slug) => `${API_BASE_URL}/admin/${slug}`,
@@ -21,6 +21,8 @@ const API_URLS = {
     DEVELOPER_SLUG: (slug) => `${API_BASE_URL}/developer/${slug}`,
     PROPERTY_TYPE_SLUG: (slug) => `${API_BASE_URL}/property-type/${slug}`,
     AMENITIES_SLUG: (slug) => `${API_BASE_URL}/amenities/${slug}`,
+    EMAIL_TEMPLATE: `${API_BASE_URL}/email-template`,
+    EMAIL_TEMPLATE_SLUG: (slug) => `${API_BASE_URL}/email-template/${slug}`,
 };
 
 module.exports = API_URLS;

@@ -5,6 +5,19 @@ const promisify = require("util").promisify;
 const API_URL = process.env.API_URL || 'http://localhost:5000/v1/';
 const ENFORCE_FINGERPRINT = String(process.env.ENFORCE_FINGERPRINT || '').trim() === '1';
 
+const expectsJsonResponse = (req) => {
+    const accept = String(req.headers.accept || '').toLowerCase();
+    const secFetchMode = String(req.headers['sec-fetch-mode'] || '').toLowerCase();
+
+    return (
+        req.xhr ||
+        req.headers['x-requested-with'] === 'XMLHttpRequest' ||
+        accept.includes('application/json') ||
+        secFetchMode === 'cors' ||
+        secFetchMode === 'same-origin'
+    );
+};
+
 const fingerprintFromReq = (req) => {
     const crypto = require('crypto');
     // Mirror the API logic: Use User-Agent for fingerprint stability across networks
@@ -87,7 +100,7 @@ const Auth = catchAsync(async (req, res, next) => {
                     sameSite: 'Lax',
                     path: '/',
                     secure: process.env.NODE_ENV === 'production',
-                    maxAge: 7 * 24 * 60 * 60 * 1000
+                    maxAge: 20 * 60 * 1000
                 });
 
                 res.cookie("admin_auth_expiry", expiry.toString(), {
@@ -95,7 +108,7 @@ const Auth = catchAsync(async (req, res, next) => {
                     sameSite: 'Lax',
                     path: '/',
                     secure: process.env.NODE_ENV === 'production',
-                    maxAge: 7 * 24 * 60 * 60 * 1000
+                    maxAge: 20 * 60 * 1000
                 });
 
                 res.cookie("admin_auth_server_time", Date.now().toString(), {
@@ -103,7 +116,7 @@ const Auth = catchAsync(async (req, res, next) => {
                     sameSite: 'Lax',
                     path: '/',
                     secure: process.env.NODE_ENV === 'production',
-                    maxAge: 7 * 24 * 60 * 60 * 1000
+                    maxAge: 20 * 60 * 1000
                 });
 
                 req.cookies.admin_auth_token = token;
@@ -195,13 +208,14 @@ const Auth = catchAsync(async (req, res, next) => {
     } catch (err) {
         console.error('ADMIN Auth Middleware Error:', err.message);
 
-        if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
+        if (expectsJsonResponse(req)) {
             return res.status(401).json({ success: false, message: err.message });
         }
 
         res.clearCookie('admin_auth_token');
         res.clearCookie('admin_auth_expiry');
         res.clearCookie('admin_refresh_token');
+        res.clearCookie('admin_session_expiry');
         return res.redirect('/');
     }
 });

@@ -1361,7 +1361,7 @@ class FileManager {
   }
 
   xhrPost(url, formData, onProgress) {
-    return new Promise((resolve, reject) => {
+    const sendRequest = (allowRefreshRetry = true) => new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open('POST', url, true);
       xhr.withCredentials = true; // Required for CORS/Authentication with session cookies
@@ -1372,17 +1372,35 @@ class FileManager {
         }
       };
       xhr.onreadystatechange = () => {
-        if (xhr.readyState === 4) {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            resolve(xhr.responseText || '');
-          } else {
-            reject(new Error(`HTTP ${xhr.status}`));
-          }
+        if (xhr.readyState !== 4) return;
+
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(xhr.responseText || '');
+          return;
         }
+
+        if (xhr.status === 401 && allowRefreshRetry && typeof window.refreshAdminSession === 'function') {
+          Promise.resolve(window.refreshAdminSession())
+            .then((refreshData) => {
+              if (refreshData && refreshData.success) {
+                return sendRequest(false).then(resolve).catch(reject);
+              }
+
+              reject(new Error((refreshData && refreshData.message) || 'Unauthorized'));
+            })
+            .catch((err) => {
+              reject(new Error(err?.message || 'Unauthorized'));
+            });
+          return;
+        }
+
+        reject(new Error(`HTTP ${xhr.status}`));
       };
       xhr.onerror = () => reject(new Error('Network error'));
       xhr.send(formData);
     });
+
+    return sendRequest(true);
   }
 
   tryParseJson(text) {

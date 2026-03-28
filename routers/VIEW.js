@@ -16,4 +16,5 @@ module.exports = {
     developer: { edit: "v1/menu/developer/edit" },
     propertyType: { edit: "v1/menu/property-type/edit" },
     amenities: { edit: "v1/menu/amenities/edit" },
+    emailTemplate: { edit: "v1/menu/email-template/edit" },
 };

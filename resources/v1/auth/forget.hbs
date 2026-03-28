@@ -6,13 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forgot Password</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script type="text/javascript">
-        (function (c, l, a, r, i, t, y) {
-            c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments) };
-            t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
-            y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
-        })(window, document, "clarity", "script", "vwl75xbfbr");
-    </script>
+    
 </head>
 
 <body
@@ -43,12 +37,12 @@
 
             <h2 id="pageTitle" class="text-3xl font-extrabold text-center text-white mb-2 tracking-tight">Forgot
                 Password</h2>
-            <p id="pageDesc" class="text-center text-gray-400 mb-8 text-sm">Follow the steps to reset your password</p>
+            <p id="pageDesc" class="text-center text-gray-400 mb-8 text-sm">Enter your email or mobile to receive an OTP</p>
 
             <!-- Success message for OTP -->
             <div id="successBanner"
                 class="hidden mb-6 bg-green-500/10 border border-green-500/20 text-green-400 p-3 rounded-xl text-center text-sm animate-fade-in">
-                OTP has been sent to your registered email address.
+                OTP has been sent to your registered email or mobile number.
             </div>
 
             <!-- STEP 1: Identify -->
@@ -62,9 +56,9 @@
                                     d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                             </svg>
                         </div>
-                        <input type="text" id="username" placeholder="Enter Email or Mobile"
+                        <input type="text" id="username" name="username" autocomplete="username" required placeholder="Enter Email or Mobile"
                             class="w-full pl-10 pr-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all duration-200 text-gray-100 placeholder-gray-500"
-                            required>
+                            >
                     </div>
                 </div>
                 <button type="submit"

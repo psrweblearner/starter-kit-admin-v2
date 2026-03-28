@@ -19,4 +19,5 @@ module.exports = {
     'developer': { api: api.developer, view: views.developer },
     'property-type': { api: api.propertyType, view: views.propertyType },
     'amenities': { api: api.amenities, view: views.amenities },
+    'email-template': { api: api.emailTemplate, view: views.emailTemplate },
 }

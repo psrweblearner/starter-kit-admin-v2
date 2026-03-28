@@ -22,6 +22,57 @@ window.fetch = async (...args) => {
     return originalFetch(resource, config);
 };
 
+let adminAuthRefreshPromise = null;
+
+const buildAuthFailure = (message = 'Session expired. Please sign in again.', rawResponse = false) => {
+    const payload = {
+        success: false,
+        status: 401,
+        authFailed: true,
+        message
+    };
+
+    if (rawResponse && typeof Response !== 'undefined') {
+        return new Response(JSON.stringify(payload), {
+            status: 401,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+    }
+
+    return payload;
+};
+
+const refreshAdminSession = () => {
+    if (!adminAuthRefreshPromise) {
+        adminAuthRefreshPromise = (async () => {
+            const refreshRes = await originalFetch(window.api('admin-auth/refresh-token'), {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            try {
+                return await refreshRes.json();
+            } catch (err) {
+                return {
+                    success: false,
+                    message: 'Unable to refresh session.'
+                };
+            }
+        })().finally(() => {
+            adminAuthRefreshPromise = null;
+        });
+    }
+
+    return adminAuthRefreshPromise;
+};
+
+window.refreshAdminSession = refreshAdminSession;
+
 window.api = function (path = '') {
     if (!path) return window.API_URL;
     if (path.startsWith('http') || path.startsWith(window.API_URL)) return path;
@@ -51,6 +102,8 @@ window.fetchData = async (url, { method = 'GET', body = null, params = {}, heade
         // 2. Prepare Config
         const finalHeaders = {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
             ...headers
         };
 
@@ -72,25 +125,25 @@ window.fetchData = async (url, { method = 'GET', body = null, params = {}, heade
         if (response.status === 401 && !url.includes('admin-auth/login')) {
             console.warn('[Auth] Access Expired. Attempting Background Refresh...');
             try {
-                // Direct call to refresh-token via the same Nginx proxy
-                const refreshRes = await originalFetch(window.api('admin-auth/refresh-token'), {
-                    method: 'POST',
-                    credentials: 'include'
-                });
-                const refreshData = await refreshRes.json();
+                const refreshData = await refreshAdminSession();
 
-                if (refreshData.success) {
+                if (refreshData && refreshData.success) {
                     console.log('[Auth] Session Refreshed. Retrying original request...');
                     // Retry the original request with the exact same config
                     response = await fetch(urlObj.toString(), config);
                 } else {
-                    console.error('[Auth] Refresh Failed. Redirecting to login.');
-                    window.location.href = '/';
-                    return refreshData;
+                    console.error('[Auth] Refresh Failed. Keeping user on the current page.');
+                    return buildAuthFailure(
+                        refreshData?.message || 'Session expired. Please sign in again.',
+                        restOptions.rawResponse
+                    );
                 }
             } catch (err) {
                 console.error('[Auth] Silent Refresh Error:', err);
-                window.location.href = '/';
+                return buildAuthFailure(
+                    err?.message || 'Session expired. Please sign in again.',
+                    restOptions.rawResponse
+                );
             }
         }
 
@@ -214,55 +267,30 @@ window.canAccess = function (action, moduleKey = null) {
     }
 };
 
-/* ============================================
- *   Global Token Refresh & jQuery Interceptor
- * ============================================ */
-let isRefreshingToken = false;
-let refreshSubscribers = [];
-
-function onRefreshed(success) {
-    refreshSubscribers.forEach(cb => cb(success));
-    refreshSubscribers = [];
-}
-
 // Global jQuery AJAX Setup to handle 401s automatically
 if (typeof $ !== 'undefined') {
     $.ajaxPrefilter(function (options, originalOptions, jqXHR) {
         const originalError = options.error;
         options.error = function (xhr, textStatus, errorThrown) {
             if (xhr.status === 401 && !options.url.includes('login')) {
-                console.warn('[jQuery Auth] Access Expired. Queuing Refresh...');
-                
-                if (!isRefreshingToken) {
-                    isRefreshingToken = true;
-                    // Trigger the silent refresh
-                    originalFetch(window.api('admin-auth/refresh-token'), {
-                        method: 'POST',
-                        credentials: 'include'
-                    }).then(res => res.json()).then(data => {
-                        isRefreshingToken = false;
-                        if (data.success) {
-                            onRefreshed(true);
-                        } else {
-                            onRefreshed(false);
-                            window.location.href = '/';
+                console.warn('[jQuery Auth] Access Expired. Attempting Refresh...');
+                refreshAdminSession()
+                    .then((data) => {
+                        if (data && data.success) {
+                            console.log('[jQuery Auth] Refresh Successful. Retrying original request.');
+                            $.ajax(originalOptions).then(options.success, originalError);
+                            return;
                         }
-                    }).catch(err => {
-                        isRefreshingToken = false;
-                        onRefreshed(false);
-                        window.location.href = '/';
+
+                        if (originalError) {
+                            originalError(xhr, textStatus, errorThrown);
+                        }
+                    })
+                    .catch(() => {
+                        if (originalError) {
+                            originalError(xhr, textStatus, errorThrown);
+                        }
                     });
-                }
-                
-                // Subscribe to wait for the refresh call to finish
-                refreshSubscribers.push((success) => {
-                    if (success) {
-                        console.log('[jQuery Auth] Refresh Successful. Retrying original request.');
-                        $.ajax(originalOptions).then(options.success, originalError);
-                    } else if (originalError) {
-                        originalError(xhr, textStatus, errorThrown);
-                    }
-                });
                 return; // Suppress the immediate failure
             }
 
@@ -282,6 +310,13 @@ if (typeof $ !== 'undefined') {
     }
 
     let warningShown = false;
+    let logoutTriggered = false;
+
+    function triggerLogout() {
+        if (logoutTriggered) return;
+        logoutTriggered = true;
+        window.location.href = '/logout';
+    }
 
     function checkSessionExpiry() {
         const expiryCookie = getCookie('admin_session_expiry');
@@ -293,9 +328,9 @@ if (typeof $ !== 'undefined') {
         const timeRemaining = expiryDate - Date.now();
         const twoMinutes = 2 * 60 * 1000;
 
-        // Auto-logout when time officially runs out
+        // Once the hard session expiry is reached, send the user back to login.
         if (timeRemaining <= 0) {
-            window.location.href = '/';
+            triggerLogout();
             return;
         }
 
