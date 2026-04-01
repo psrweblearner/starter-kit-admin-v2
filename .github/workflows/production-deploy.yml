@@ -75,12 +75,16 @@ jobs:
           JWT_PUBLIC_KEY_PATH: ${{ secrets.JWT_PUBLIC_KEY_PATH }}
           UPLOAD_PATH: ${{ secrets.UPLOAD_PATH }}
           DEBUG: ${{ secrets.DEBUG }}
+          # Optional: demo login banner on / (never set in real production)
+          SHOW_DEMO_LOGIN: ${{ secrets.SHOW_DEMO_LOGIN }}
+          DEMO_LOGIN_USER: ${{ secrets.DEMO_LOGIN_USER }}
+          DEMO_LOGIN_PASS: ${{ secrets.DEMO_LOGIN_PASS }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT || 22 }}
-          envs: IMAGE,TAG,GHCR_USERNAME,GHCR_TOKEN,NODE_ENV,PORT,API_URL,INTERNAL_SECRET,JWT_PUBLIC_KEY_PATH,UPLOAD_PATH,DEBUG
+          envs: IMAGE,TAG,GHCR_USERNAME,GHCR_TOKEN,NODE_ENV,PORT,API_URL,INTERNAL_SECRET,JWT_PUBLIC_KEY_PATH,UPLOAD_PATH,DEBUG,SHOW_DEMO_LOGIN,DEMO_LOGIN_USER,DEMO_LOGIN_PASS
           script: |
             set -eu
             (set -o pipefail) 2>/dev/null && set -o pipefail || true
@@ -118,6 +122,9 @@ jobs:
               -e "JWT_PUBLIC_KEY_PATH=${JWT_PUBLIC_KEY_PATH:-config/public.pem}" \
               -e "UPLOAD_PATH=${UPLOAD_PATH:-./uploads}" \
               -e "DEBUG=${DEBUG:-false}" \
+              -e "SHOW_DEMO_LOGIN=${SHOW_DEMO_LOGIN:-}" \
+              -e "DEMO_LOGIN_USER=${DEMO_LOGIN_USER:-}" \
+              -e "DEMO_LOGIN_PASS=${DEMO_LOGIN_PASS:-}" \
               -v admin_uploads:/app/uploads \
               "${IMAGE}:${TAG}"
             rc=$?
@@ -143,6 +150,9 @@ jobs:
                   -e "JWT_PUBLIC_KEY_PATH=${JWT_PUBLIC_KEY_PATH:-config/public.pem}" \
                   -e "UPLOAD_PATH=${UPLOAD_PATH:-./uploads}" \
                   -e "DEBUG=${DEBUG:-false}" \
+                  -e "SHOW_DEMO_LOGIN=${SHOW_DEMO_LOGIN:-}" \
+                  -e "DEMO_LOGIN_USER=${DEMO_LOGIN_USER:-}" \
+                  -e "DEMO_LOGIN_PASS=${DEMO_LOGIN_PASS:-}" \
                   -v admin_uploads:/app/uploads \
                   "${old_image}" || true
               fi
