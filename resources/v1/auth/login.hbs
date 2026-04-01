@@ -7,7 +7,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
+    <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "w4u7cxkxqq");
+</script>
 </head>
 
 <body
@@ -37,7 +43,21 @@
             </div>
 
             <h2 class="text-3xl font-extrabold text-center text-white mb-2 tracking-tight">Welcome Back</h2>
-            <p class="text-center text-gray-400 mb-8 text-sm">Sign in to access your dashboard</p>
+            <p class="text-center text-gray-400 mb-6 text-sm">Sign in to access your dashboard</p>
+
+            {{#if showDemoLogin}}
+            <div class="mb-6 rounded-xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-left text-sm">
+                <p class="font-semibold text-amber-200 mb-2 text-center">Demo login</p>
+                <p class="text-gray-300 break-all">
+                    <span class="text-gray-500">Username</span><br>
+                    <code class="text-amber-100/95 select-all">{{demoLoginUser}}</code>
+                </p>
+                <p class="text-gray-300 mt-2 break-all">
+                    <span class="text-gray-500">Password</span><br>
+                    <code class="text-amber-100/95 select-all">{{demoLoginPass}}</code>
+                </p>
+            </div>
+            {{/if}}
 
             <!-- Login Form -->
             <form id="loginForm" class="space-y-6">
@@ -51,7 +71,8 @@
                                     d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                             </svg>
                         </div>
-                        <input type="text" id="username" name="username" placeholder="Email or Mobile" value="demo@example.com"
+                        <input type="text" id="username" name="username" placeholder="Email or Mobile"
+                            value="{{#if showDemoLogin}}{{demoLoginUser}}{{/if}}"
                             class="w-full pl-10 pr-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all duration-200 text-gray-100 placeholder-gray-500"
                             required>
                     </div>
@@ -70,7 +91,8 @@
                                     d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                             </svg>
                         </div>
-                        <input type="password" id="password" name="password" value="123456789" placeholder="••••••••"
+                        <input type="password" id="password" name="password" placeholder="••••••••"
+                            value="{{#if showDemoLogin}}{{demoLoginPass}}{{/if}}"
                             class="w-full pl-10 pr-4 py-3 bg-gray-900/50 border border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none transition-all duration-200 text-gray-100 placeholder-gray-500"
                             required>
                     </div>
@@ -86,10 +108,10 @@
                 class="mt-4 text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg p-3 text-sm text-center hidden animate-pulse">
             </p>
 
-            <p class="mt-8 text-center text-sm text-gray-500">
+            {{!-- <p class="mt-8 text-center text-sm text-gray-500">
                 Don't have an account? <a href="/contact"
                     class="font-semibold text-blue-400 hover:text-blue-300 transition-colors">Contact Admin</a>
-            </p>
+            </p> --}}
         </div>
     </div>
 

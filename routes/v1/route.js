@@ -8,7 +8,16 @@ const permissions = require('../../middleware/Permission');
 
 // Public auth pages
 router.get('/', redirectIfAuthenticated, (req, res) => {
-    res.render('v1/auth/login', { layout: false });
+    const showDemo =
+        String(process.env.SHOW_DEMO_LOGIN || '').toLowerCase() === 'true';
+    const demoLoginUser = (process.env.DEMO_LOGIN_USER || '').trim();
+    const demoLoginPass = (process.env.DEMO_LOGIN_PASS || '').trim();
+    res.render('v1/auth/login', {
+        layout: false,
+        showDemoLogin: showDemo && Boolean(demoLoginUser && demoLoginPass),
+        demoLoginUser,
+        demoLoginPass
+    });
 });
 
 
