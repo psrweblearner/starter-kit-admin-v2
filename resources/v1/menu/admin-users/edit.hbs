@@ -34,7 +34,7 @@
 {{#section 'script'}}
 <script src="/admin/js/profile.js"></script>
 <script>
-    const roles = {{{ json data.roles }}} || [];
+    const roles = {{{json data.roles }}} || [];
     $('#psr-profile-form').psrValidate({
         rules: {
             firstName: { required: true, minLength: 2 },

@@ -42,6 +42,7 @@ exports.edit = catchAsync(async (req, res) => {
     const viewPath = menuEntry.view?.edit || `v1/menu/${menu}/edit`;
     const layout = menuEntry.layout || "v1/layouts/main";
     const apis = menuEntry.api?.edit || [];
+    console.log("Edit APIs:", apis);
     // Check if view exists
     if (!viewExists(menu, "edit")) {
         return res.status(404).render("v1/errors/404", { message: "Edit page not found" });
